@@ -35,8 +35,11 @@ class Neo4jGraph:
             return result
     def _add_node(self, tx, node_name, **properties):
         # 创建一个包含所有属性的字符串，格式为 "key1: $key1, key2: $key2, ..."
-        properties_query = ", ".join([f"{key}: ${key}" for key in properties])
-        query = f"CREATE (n:Node {{name: $node_name, {properties_query}}}) RETURN n"
+        if properties:
+            properties_query = ", " + ", ".join([f"{key}: ${key}" for key in properties])
+        else:
+            properties_query = ""
+        query = f"CREATE (n:Node {{name: $node_name{properties_query}}}) RETURN n"
         result = tx.run(query, node_name=node_name, **properties)
         return result.single()[0] if result.peek() else None
 
