@@ -156,6 +156,10 @@ class Application {
     }
 }
 
+// Declare graph and canvas at module level
+let graph;
+let canvas;
+
 // Full screen canvas setup and graph initialization
 async function initializeGraph() {
     // Setup canvas dimensions
