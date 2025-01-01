@@ -7,7 +7,7 @@ sys.path.append(project_root)
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from flask_socketio import SocketIO
+from flask_socketio import SocketIO, emit
 from database.Neo4jStuff import get_graph_instance
 import threading
 import time
@@ -15,7 +15,11 @@ import time
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)  # 允许跨域请求
 GRAPH = get_graph_instance()
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, 
+                   cors_allowed_origins="*",
+                   async_mode='threading',
+                   logger=True,
+                   engineio_logger=True)
 
 # WebSocket 事件监听
 @socketio.on('connect')

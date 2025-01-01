@@ -1,7 +1,8 @@
 class WebSocketClient {
-    constructor(url = 'ws://localhost:5000/socket.io') {
+    constructor(url = 'http://localhost:5000') {
         this.url = url;
         this.socket = null;
+        this.connected = false;
         this.callbacks = {
             onNodeUpdate: [],
             onNodeCreate: [],
@@ -13,26 +14,36 @@ class WebSocketClient {
     }
 
     connect() {
-        this.socket = new WebSocket(this.url);
+        // Load Socket.IO client library dynamically
+        const script = document.createElement('script');
+        script.src = 'https://cdn.socket.io/4.5.4/socket.io.min.js';
+        script.onload = () => {
+            this.socket = io(this.url, {
+                transports: ['websocket'],
+                reconnection: true,
+                reconnectionDelay: 5000,
+                reconnectionAttempts: Infinity
+            });
 
-        this.socket.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            this.handleMessage(message);
-        };
+            this.socket.on('connect', () => {
+                console.log('Socket.IO connection established');
+                this.connected = true;
+            });
 
-        this.socket.onopen = () => {
-            console.log('WebSocket connection established');
-        };
+            this.socket.on('disconnect', () => {
+                console.log('Socket.IO connection closed');
+                this.connected = false;
+            });
 
-        this.socket.onclose = () => {
-            console.log('WebSocket connection closed');
-            // Attempt to reconnect after 5 seconds
-            setTimeout(() => this.connect(), 5000);
-        };
+            this.socket.on('connect_error', (error) => {
+                console.error('Socket.IO connection error:', error);
+            });
 
-        this.socket.onerror = (error) => {
-            console.error('WebSocket error:', error);
+            this.socket.onAny((event, data) => {
+                this.handleMessage({event, data});
+            });
         };
+        document.head.appendChild(script);
     }
 
     handleMessage(message) {

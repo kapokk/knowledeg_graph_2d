@@ -15,5 +15,9 @@
     <script src="{{ url_for('static', filename='js/ApiClient.js') }}"></script>
     <script src="{{ url_for('static', filename='js/WebSocketClient.js') }}"></script>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Add this to help debug Socket.IO connection issues
+        localStorage.debug = 'socket.io-client:socket';
+    </script>
 </body>
 </html>
