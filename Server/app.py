@@ -12,7 +12,7 @@ from database.Neo4jStuff import get_graph_instance
 import threading
 import time
 
-app = Flask(__name__, static_folder='static', static_url_path='')
+app = Flask(__name__, static_folder='../static', static_url_path='/static')
 CORS(app)  # 允许跨域请求
 GRAPH = get_graph_instance()
 socketio = SocketIO(app, 
@@ -248,6 +248,11 @@ threading.Thread(target=poll_neo4j_changes, daemon=True).start()
 @app.route('/')
 def home():
     return app.send_static_file('index.html')
+
+# 添加静态文件路由
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return app.send_static_file(filename)
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
