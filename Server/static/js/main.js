@@ -225,12 +225,16 @@ class Application {
     }
     
     setupGraphEventHandlers() {
-        this.canvas.onAdded = function(node) {
-            this.appClient.createNode(['CustomNode'], node.properties)
+        this.canvas.onNodeAdded = (node) => {
+            const labels = node.labels || ['CustomNode']; // 使用节点的 labels 属性或默认值
+            this.apiClient.createNode(labels, node.properties)
                 .then(createdNode => {
-                    nodeMap.set(createdNode.id, node);
+                    this.nodeMap.set(createdNode.id, node);
                 })
-                .catch(console.error);
+                .catch(error => {
+                    console.error('Failed to create node:', error);
+                    alert('Failed to create node. Please try again.');
+                });
         };
     
         this.canvas.onNodeRemoved = function(node) {
