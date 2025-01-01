@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LiteGraph.js Example</title>
+    <title>Knowledge Graph</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/litegraph.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     <script src="{{ url_for('static', filename='js/litegraph.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Add this to help debug Socket.IO connection issues
+        localStorage.debug = 'socket.io-client:socket';
+    </script>
 </head>
 <body style='width:100%; height:100%'>
     <div class="graph-wrapper">
         <canvas id="graph-container"></canvas>
     </div>
-
-    <script src="{{ url_for('static', filename='js/ApiClient.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/WebSocketClient.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
-    <script>
-        // Add this to help debug Socket.IO connection issues
-        localStorage.debug = 'socket.io-client:socket';
-    </script>
 </body>
 </html>
