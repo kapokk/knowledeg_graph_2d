@@ -1,3 +1,80 @@
+// Custom Knowledge Graph Node
+class KnowledgeGraphNode extends LGraphNode {
+    constructor() {
+        super();
+        this.title = "Knowledge Graph Node";
+        this.size = [300, 200];
+
+        // 初始化标签和属性
+        this.labels = ["Node"]; // 默认标签
+        this.properties = {};   // 默认属性
+
+        // 添加输入和输出端口
+        this.addInput("", "");  // 通用输入端口
+        this.addOutput("", ""); // 通用输出端口
+
+        // 添加 UI 控件
+        this.addLabelsControl();
+        this.addPropertiesControl();
+    }
+
+    // 添加标签控件
+    addLabelsControl() {
+        this.addWidget("text", "Labels", this.labels.join(", "), (value) => {
+            this.labels = value.split(",").map(label => label.trim());
+        });
+    }
+
+    // 添加属性控件
+    addPropertiesControl() {
+        for (const key in this.properties) {
+            this.addPropertyWidget(key, this.properties[key]);
+        }
+        this.addWidget("button", "Add Property", "", () => {
+            const key = prompt("Enter property key:");
+            if (key) {
+                const value = prompt("Enter property value:");
+                this.properties[key] = value;
+                this.addPropertyWidget(key, value);
+                this.setSize([this.size[0], this.size[1] + 30]); // 调整节点大小
+            }
+        });
+    }
+
+    // 添加属性控件
+    addPropertyWidget(key, value) {
+        this.addWidget("text", key, value, (newValue) => {
+            this.properties[key] = newValue;
+        });
+    }
+
+    // 节点执行逻辑
+    onExecute() {
+        // 这里可以处理节点的逻辑，例如根据输入更新输出
+        const inputData = this.getInputData(0);
+        this.setOutputData(0, inputData);
+    }
+
+    // 序列化节点
+    serialize() {
+        return {
+            labels: this.labels,
+            properties: this.properties
+        };
+    }
+
+    // 反序列化节点
+    deserialize(data) {
+        this.labels = data.labels || ["Node"];
+        this.properties = data.properties || {};
+        this.addLabelsControl();
+        this.addPropertiesControl();
+    }
+}
+
+// 注册节点类型
+LiteGraph.registerNodeType("knowledge/KnowledgeGraphNode", KnowledgeGraphNode);
+
 // Initialize API and WebSocket clients
 const apiClient = new ApiClient();
 const wsClient = new WebSocketClient();
@@ -37,7 +114,7 @@ async function loadGraphData() {
     try {
         const nodes = await apiClient.getNodes();
         nodes.forEach(node => {
-            const lgNode = createLiteGraphNode(node);
+            const lgNode = createKnowledgeGraphNode(node);
             graph.add(lgNode);
             nodeMap.set(node.id, lgNode);
         });
@@ -46,8 +123,8 @@ async function loadGraphData() {
     }
 }
 
-function createLiteGraphNode(nodeData) {
-    const node = LiteGraph.createNode("basic/watch");
+function createKnowledgeGraphNode(nodeData) {
+    const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode");
     node.title = nodeData.labels.join(', ');
     node.properties = nodeData.properties;
     node.pos = [Math.random() * 500, Math.random() * 500];
@@ -58,7 +135,7 @@ function setupWebSocketListeners() {
     wsClient.connect();
 
     wsClient.on('node_created', (nodeData) => {
-        const lgNode = createLiteGraphNode(nodeData);
+        const lgNode = createKnowledgeGraphNode(nodeData);
         graph.add(lgNode);
         nodeMap.set(nodeData.id, lgNode);
     });
