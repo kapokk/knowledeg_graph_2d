@@ -1,1 +1,24 @@
 
+/* Remove default margin and padding */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Full screen graph container */
+.graph-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#graph-container {
+    width: 100%;
+    height: 100%;
+    background-color: #f8f8f8;
+}

@@ -1,13 +1,12 @@
-// Adjust canvas size on window resize
-window.addEventListener('resize', function() {
+// Full screen canvas setup
+function setupCanvas() {
     const canvas = document.getElementById('graph-container');
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-});
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
 
-// Initial canvas size setup
-window.addEventListener('load', function() {
-    const canvas = document.getElementById('graph-container');
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-});
+// Handle window resize
+window.addEventListener('resize', setupCanvas);
+
+// Initial setup
+window.addEventListener('load', setupCanvas);
