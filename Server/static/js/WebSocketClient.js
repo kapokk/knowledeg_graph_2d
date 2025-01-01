@@ -1,4 +1,4 @@
-class WebSocketClient {
+export default class WebSocketClient {
     constructor(url = 'http://localhost:5000') {
         this.url = url;
         this.socket = null;
