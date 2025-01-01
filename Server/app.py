@@ -100,57 +100,89 @@ threading.Thread(target=poll_neo4j_changes, daemon=True).start()
 def home():
     return render_template('index.html')
 
-# 获取所有节点
-@app.route('/api/nodes', methods=['GET'])
-def get_nodes():
-    nodes = GRAPH.get_all_nodes()
-    return jsonify(nodes)
+# 节点接口
+@app.route('/api/nodes', methods=['GET', 'POST'])
+def handle_nodes():
+    if request.method == 'GET':
+        nodes = GRAPH.get_all_nodes()
+        return jsonify({
+            'code': 200,
+            'data': nodes
+        })
+    elif request.method == 'POST':
+        data = request.json
+        labels = data.get('labels', ['Node'])
+        properties = data.get('properties', {})
+        node = GRAPH.add_node(labels, properties)
+        return jsonify({
+            'code': 201,
+            'data': node
+        })
 
-# 创建新节点
-@app.route('/nodes', methods=['POST'])
-def create_node():
-    data = request.json
-    labels = data.get('labels', ['Node'])
-    properties = data.get('properties', {})
-    node = GRAPH.add_node(labels, properties)
-    return jsonify(node)
+@app.route('/api/nodes/<int:node_id>', methods=['GET', 'PUT', 'DELETE'])
+def handle_node(node_id):
+    if request.method == 'GET':
+        node = GRAPH.get_node_by_id(node_id)
+        return jsonify({
+            'code': 200,
+            'data': node
+        })
+    elif request.method == 'PUT':
+        properties = request.json.get('properties', {})
+        updated_node = GRAPH.update_node_by_node_id(node_id, properties)
+        return jsonify({
+            'code': 200,
+            'data': updated_node
+        })
+    elif request.method == 'DELETE':
+        deleted_node = GRAPH.remove_node_by_id(node_id)
+        return jsonify({
+            'code': 204,
+            'data': deleted_node
+        })
 
-# 更新节点属性
-@app.route('/nodes/<int:node_id>', methods=['PUT'])
-def update_node(node_id):
-    properties = request.json.get('properties', {})
-    updated_node = GRAPH.update_node_by_node_id(node_id, properties)
-    return jsonify(updated_node)
+# 关系接口
+@app.route('/api/relationships', methods=['GET', 'POST'])
+def handle_relationships():
+    if request.method == 'GET':
+        relationships = GRAPH.get_all_relationships()
+        return jsonify({
+            'code': 200,
+            'data': relationships
+        })
+    elif request.method == 'POST':
+        data = request.json
+        start_node_id = data.get('startNodeId')
+        end_node_id = data.get('endNodeId')
+        rel_type = data.get('type', 'CONNECTS_TO')
+        properties = data.get('properties', {})
+        relationship = GRAPH.add_relationship_by_nodes_id(start_node_id, end_node_id, rel_type, properties)
+        return jsonify({
+            'code': 201,
+            'data': relationship
+        })
 
-# 删除节点
-@app.route('/nodes/<int:node_id>', methods=['DELETE'])
-def delete_node(node_id):
-    deleted_node = GRAPH.remove_node_by_id(node_id)
-    return jsonify(deleted_node)
-
-# 创建新关系
-@app.route('/relationships', methods=['POST'])
-def create_relationship():
-    data = request.json
-    start_node_id = data.get('startNodeId')
-    end_node_id = data.get('endNodeId')
-    rel_type = data.get('type', 'CONNECTS_TO')
-    properties = data.get('properties', {})
-    relationship = GRAPH.add_relationship_by_nodes_id(start_node_id, end_node_id, rel_type, properties)
-    return jsonify(relationship)
-
-# 更新关系属性
-@app.route('/relationships/<int:relationship_id>', methods=['PUT'])
-def update_relationship(relationship_id):
-    properties = request.json.get('properties', {})
-    updated_relationship = GRAPH.update_relationship_by_rel_id(relationship_id, properties)
-    return jsonify(updated_relationship)
-
-# 删除关系
-@app.route('/relationships/<int:relationship_id>', methods=['DELETE'])
-def delete_relationship(relationship_id):
-    deleted_relationship = GRAPH.remove_relationship_by_id(relationship_id)
-    return jsonify(deleted_relationship)
+@app.route('/api/relationships/<int:relationship_id>', methods=['GET', 'PUT', 'DELETE'])
+def handle_relationship(relationship_id):
+    if request.method == 'GET':
+        relationship = GRAPH.get_relationship_by_id(relationship_id)
+        return jsonify({
+            'code': 200,
+            'data': relationship
+        })
+    elif request.method == 'PUT':
+        properties = request.json.get('properties', {})
+        updated_relationship = GRAPH.update_relationship_by_rel_id(relationship_id, properties)
+        return jsonify({
+            'code': 200,
+            'data': updated_relationship
+        })
+    elif request.method == 'DELETE':
+        deleted_relationship = GRAPH.remove_relationship_by_id(relationship_id)
+        return jsonify({
+            'code': 204,
+            'data': deleted_relationship
+        })
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)

@@ -5,7 +5,11 @@ export default class ApiClient {
 
     async getNodes() {
         const response = await fetch(`${this.baseUrl}/nodes`);
-        return await response.json();
+        const result = await response.json();
+        if (result.code === 200) {
+            return result.data;
+        }
+        throw new Error('Failed to get nodes');
     }
 
     async createNode(labels, properties) {
@@ -16,7 +20,11 @@ export default class ApiClient {
             },
             body: JSON.stringify({ labels, properties })
         });
-        return await response.json();
+        const result = await response.json();
+        if (result.code === 201) {
+            return result.data;
+        }
+        throw new Error('Failed to create node');
     }
 
     async updateNode(nodeId, properties) {
@@ -27,14 +35,22 @@ export default class ApiClient {
             },
             body: JSON.stringify({ properties })
         });
-        return await response.json();
+        const result = await response.json();
+        if (result.code === 200) {
+            return result.data;
+        }
+        throw new Error('Failed to update node');
     }
 
     async deleteNode(nodeId) {
         const response = await fetch(`${this.baseUrl}/nodes/${nodeId}`, {
             method: 'DELETE'
         });
-        return await response.json();
+        const result = await response.json();
+        if (result.code === 204) {
+            return result.data;
+        }
+        throw new Error('Failed to delete node');
     }
 
     async createRelationship(startNodeId, endNodeId, type, properties) {
@@ -45,13 +61,21 @@ export default class ApiClient {
             },
             body: JSON.stringify({ startNodeId, endNodeId, type, properties })
         });
-        return await response.json();
+        const result = await response.json();
+        if (result.code === 201) {
+            return result.data;
+        }
+        throw new Error('Failed to create relationship');
     }
 
     async deleteRelationship(relationshipId) {
         const response = await fetch(`${this.baseUrl}/relationships/${relationshipId}`, {
             method: 'DELETE'
         });
-        return await response.json();
+        const result = await response.json();
+        if (result.code === 204) {
+            return result.data;
+        }
+        throw new Error('Failed to delete relationship');
     }
 }
