@@ -1,5 +1,5 @@
 class WebSocketClient {
-    constructor(url = 'ws://localhost:5000/ws') {
+    constructor(url = 'ws://localhost:5000') {
         this.url = url;
         this.socket = null;
         this.callbacks = {

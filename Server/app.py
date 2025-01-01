@@ -7,7 +7,7 @@ sys.path.append(project_root)
 
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 from database.Neo4jStuff import get_graph_instance
 import threading
 import time
@@ -97,7 +97,7 @@ def home():
     return render_template('index.html')
 
 # 获取所有节点
-@app.route('/nodes', methods=['GET'])
+@app.route('/api/nodes', methods=['GET'])
 def get_nodes():
     nodes = GRAPH.get_all_nodes()
     return jsonify(nodes)
