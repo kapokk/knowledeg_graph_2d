@@ -1,7 +1,10 @@
 // Custom Knowledge Graph Node
 class KnowledgeGraphNode extends LGraphNode {
-    constructor(labels = ["Node"], properties = {}) {
+    constructor(node) {
         super();
+
+        let labels = node.labels
+        let properties = node.properties
         this.title = "Knowledge Graph Node";
         this.size = [300, 200];
 
@@ -142,7 +145,7 @@ async function loadGraphData() {
 }
 
 function createKnowledgeGraphNode(nodeData) {
-    const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData.labels, nodeData.properties);
+    const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData);
     node.title = nodeData.labels.join(', ');
     node.pos = [Math.random() * 500, Math.random() * 500];
     return node;
