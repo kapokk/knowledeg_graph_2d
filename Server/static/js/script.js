@@ -1,13 +1,13 @@
 // Custom Knowledge Graph Node
 class KnowledgeGraphNode extends LGraphNode {
-    constructor() {
+    constructor(labels = ["Node"], properties = {}) {
         super();
         this.title = "Knowledge Graph Node";
         this.size = [300, 200];
 
         // 初始化标签和属性
-        this.labels = ["Node"]; // 默认标签
-        this.properties = {};   // 默认属性
+        this.labels = Array.isArray(labels) ? labels : [labels]; // 确保 labels 是数组
+        this.properties = properties || {};   // 使用传入的属性或默认空对象
 
         // 添加输入和输出端口
         this.addInput("", "");  // 通用输入端口
@@ -142,9 +142,8 @@ async function loadGraphData() {
 }
 
 function createKnowledgeGraphNode(nodeData) {
-    const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode");
+    const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData.labels, nodeData.properties);
     node.title = nodeData.labels.join(', ');
-    node.properties = nodeData.properties;
     node.pos = [Math.random() * 500, Math.random() * 500];
     return node;
 }
