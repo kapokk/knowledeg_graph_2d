@@ -1,5 +1,5 @@
 class WebSocketClient {
-    constructor(url = 'ws://localhost:5000') {
+    constructor(url = 'ws://localhost:5000/socket.io') {
         this.url = url;
         this.socket = null;
         this.callbacks = {
@@ -26,6 +26,12 @@ class WebSocketClient {
 
         this.socket.onclose = () => {
             console.log('WebSocket connection closed');
+            // Attempt to reconnect after 5 seconds
+            setTimeout(() => this.connect(), 5000);
+        };
+
+        this.socket.onerror = (error) => {
+            console.error('WebSocket error:', error);
         };
     }
 
