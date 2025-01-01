@@ -20,17 +20,32 @@ class KnowledgeGraphNode extends LGraphNode {
 
     // 添加标签控件
     addLabelsControl() {
-        this.addWidget("text", "Labels", this.labels.join(", "), (value) => {
+        // 如果控件已经存在，先移除
+        if (this.labelsWidget) {
+            this.removeWidget(this.labelsWidget);
+        }
+        // 添加新的控件
+        this.labelsWidget = this.addWidget("text", "Labels", this.labels.join(", "), (value) => {
             this.labels = value.split(",").map(label => label.trim());
         });
     }
 
     // 添加属性控件
     addPropertiesControl() {
-        for (const key in this.properties) {
-            this.addPropertyWidget(key, this.properties[key]);
+        // 移除所有现有的属性控件
+        if (this.propertyWidgets) {
+            this.propertyWidgets.forEach(widget => this.removeWidget(widget));
         }
-        this.addWidget("button", "Add Property", "", () => {
+        this.propertyWidgets = [];
+
+        // 添加属性控件
+        for (const key in this.properties) {
+            const widget = this.addPropertyWidget(key, this.properties[key]);
+            this.propertyWidgets.push(widget);
+        }
+
+        // 添加 "Add Property" 按钮
+        this.addPropertyButton = this.addWidget("button", "Add Property", "", () => {
             const key = prompt("Enter property key:");
             if (key) {
                 const value = prompt("Enter property value:");
@@ -43,9 +58,11 @@ class KnowledgeGraphNode extends LGraphNode {
 
     // 添加属性控件
     addPropertyWidget(key, value) {
-        this.addWidget("text", key, value, (newValue) => {
+        const widget = this.addWidget("text", key, value, (newValue) => {
             this.properties[key] = newValue;
         });
+        this.propertyWidgets.push(widget);
+        return widget;
     }
 
     // 节点执行逻辑
@@ -67,8 +84,14 @@ class KnowledgeGraphNode extends LGraphNode {
     deserialize(data) {
         this.labels = data.labels || ["Node"];
         this.properties = data.properties || {};
+        this.refreshControls();
+    }
+
+    // 刷新控件
+    refreshControls() {
         this.addLabelsControl();
         this.addPropertiesControl();
+        this.setDirtyCanvas(true, true); // 强制刷新界面
     }
 }
 
