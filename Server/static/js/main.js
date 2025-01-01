@@ -225,44 +225,50 @@ class Application {
     }
     
     setupGraphEventHandlers() {
-        this.canvas.onNodeAdded = (node) => {
-            const labels = node.labels || ['CustomNode']; // 使用节点的 labels 属性或默认值
-            this.apiClient.createNode(labels, node.properties)
+        // 在 KnowledgeGraphNode 类中添加事件处理
+        KnowledgeGraphNode.prototype.onAdded = function() {
+            const labels = this.labels || ['CustomNode'];
+            this.app.apiClient.createNode(labels, this.properties)
                 .then(createdNode => {
-                    this.nodeMap.set(createdNode.id, node);
+                    this.app.nodeMap.set(createdNode.id, this);
                 })
                 .catch(error => {
                     console.error('Failed to create node:', error);
                     alert('Failed to create node. Please try again.');
                 });
         };
-    
-        this.canvas.onNodeRemoved = function(node) {
-            const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
+
+        KnowledgeGraphNode.prototype.onRemoved = function() {
+            const nodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
             if (nodeId) {
-                this.appClient.deleteNode(nodeId)
+                this.app.apiClient.deleteNode(nodeId)
                     .catch(console.error);
             }
         };
-    
-        this.canvas.onNodePropertyChanged = function(node, property, value) {
-            const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
+
+        KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
+            const nodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
             if (nodeId) {
-                const properties = { ...node.properties, [property]: value };
-                this.appClient.updateNode(nodeId, properties)
+                const properties = { ...this.properties, [property]: value };
+                this.app.apiClient.updateNode(nodeId, properties)
                     .catch(console.error);
             }
         };
-    
-        this.canvas.onConnectionChange = function(linkInfo) {
-            if (linkInfo.link) {
-                const startNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.origin.node)?.[0];
-                const endNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.target.node)?.[0];
+
+        KnowledgeGraphNode.prototype.onConnectionsChange = function(type, slot, connected, link_info, input_info) {
+            if (connected && type === LiteGraph.OUTPUT) {
+                const startNodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
+                const endNodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === link_info.target.node)?.[0];
                 if (startNodeId && endNodeId) {
-                    this.appClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+                    this.app.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
                         .catch(console.error);
                 }
             }
+        };
+
+        // 将应用实例附加到节点
+        KnowledgeGraphNode.prototype.onConfigure = function() {
+            this.app = this.graph.app;
         };
     }
     
