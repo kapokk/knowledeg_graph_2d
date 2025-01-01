@@ -12,28 +12,6 @@
         <canvas id="graph-container"></canvas>
     </div>
 
-    <script>
-        // Create the graph
-        const graph = new LGraph();
-        
-        // Create canvas
-        const canvas = new LGraphCanvas("#graph-container", graph);
-        
-        // Create nodes
-        const node1 = LiteGraph.createNode("basic/const");
-        node1.pos = [100, 200];
-        node1.setValue(42);
-        graph.add(node1);
-
-        const node2 = LiteGraph.createNode("basic/watch");
-        node2.pos = [400, 200];
-        graph.add(node2);
-
-        // Connect nodes
-        node1.connect(0, node2, 0);
-
-        // Start the graph
-        graph.start();
-    </script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>
