@@ -489,10 +489,44 @@ class Neo4jGraph:
         
         return isolated_nodes
 
+    def get_all_relationships(self):
+        """获取数据库中的所有关系
+        
+        Returns:
+            list: 所有关系的列表，每个关系包含 rel_id, type, properties, start_node_id 和 end_node_id
+        """
+        with self.begin_session() as session:
+            return session.execute_read(self._get_all_relationships)
+
+    def _get_all_relationships(self, tx):
+        query = """
+        MATCH ()-[r]->()
+        RETURN id(r) as rel_id, 
+               type(r) as rel_type,
+               keys(r) as rel_keys,
+               [k in keys(r) | r[k]] as rel_values,
+               id(startNode(r)) as start_node_id,
+               id(endNode(r)) as end_node_id
+        """
+        result = tx.run(query)
+        
+        relationships = []
+        for record in result:
+            relationship = {
+                'rel_id': record['rel_id'],
+                'type': record['rel_type'],
+                'properties': dict(zip(record['rel_keys'], record['rel_values'])),
+                'start_node_id': record['start_node_id'],
+                'end_node_id': record['end_node_id']
+            }
+            relationships.append(relationship)
+        
+        return relationships
+
 def get_graph_instance():
     uri = "bolt://localhost:7687"  # 您的Neo4j数据库URI
     user = "neo4j"  # 您的Neo4j用户名
-    password = "12345678"  # 您的Neo4j密码
+    password = "AGCF3xJumbfJD-b"  # 您的Neo4j密码
     GRAPH = Neo4jGraph(uri, user, password)
     # 创建必要的索引
     GRAPH.create_indexes()
