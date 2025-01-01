@@ -115,6 +115,11 @@ class Application {
         
         // 初始化节点管理器
         this.nodeManager = new NodeManager(this.apiClient, this.wsClient);
+
+        // 初始化图和画布
+        this.graph = null;
+        this.canvas = null;
+        this.nodeMap = new Map();
     }
 
     async initialize() {
@@ -130,11 +135,37 @@ class Application {
             
             // 设置事件监听
             this.setupEventListeners();
+
+            // 初始化画布和图形
+            await this.initializeGraph();
             
             console.log('Application initialized successfully');
         } catch (error) {
             console.error('Failed to initialize application:', error);
         }
+    }
+
+    async initializeGraph() {
+        // Setup canvas dimensions
+        const canvasElement = document.getElementById('graph-container');
+        canvasElement.width = window.innerWidth;
+        canvasElement.height = window.innerHeight;
+
+        // Create and setup the graph
+        this.graph = new LGraph();
+        this.canvas = new LGraphCanvas("#graph-container", this.graph);
+
+        // Load initial data from Neo4j
+        await this.loadGraphData();
+
+        // Setup WebSocket listeners
+        this.setupWebSocketListeners();
+
+        // Setup LiteGraph event handlers
+        this.setupGraphEventHandlers();
+
+        // Start the graph
+        this.graph.start();
     }
 
     setupEventListeners() {
@@ -158,33 +189,6 @@ class Application {
     }
 }
 
-// Declare graph and canvas at module level
-let graph;
-let canvas;
-
-// Full screen canvas setup and graph initialization
-async function initializeGraph() {
-    // Setup canvas dimensions
-    const canvasElement = document.getElementById('graph-container');
-    canvasElement.width = window.innerWidth;
-    canvasElement.height = window.innerHeight;
-
-    // Create and setup the graph
-    graph = new LGraph();
-    canvas = new LGraphCanvas("#graph-container", graph);
-
-    // Load initial data from Neo4j
-    await loadGraphData();
-
-    // Setup WebSocket listeners
-    setupWebSocketListeners();
-
-    // Setup LiteGraph event handlers
-    setupGraphEventHandlers();
-
-    // Start the graph
-    graph.start();
-}
 
 async function loadGraphData() {
     try {
@@ -270,9 +274,6 @@ function setupGraphEventHandlers() {
         }
     };
 }
-
-// Initialize when page loads
-window.addEventListener('load', initializeGraph);
 
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
