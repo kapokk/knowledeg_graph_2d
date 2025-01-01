@@ -156,6 +156,33 @@ class Application {
     }
 }
 
+// Full screen canvas setup and graph initialization
+async function initializeGraph() {
+    // Setup canvas dimensions
+    const canvasElement = document.getElementById('graph-container');
+    canvasElement.width = window.innerWidth;
+    canvasElement.height = window.innerHeight;
+
+    // Create and setup the graph
+    graph = new LGraph();
+    canvas = new LGraphCanvas("#graph-container", graph);
+
+    // Load initial data from Neo4j
+    await loadGraphData();
+
+    // Setup WebSocket listeners
+    setupWebSocketListeners();
+
+    // Setup LiteGraph event handlers
+    setupGraphEventHandlers();
+
+    // Start the graph
+    graph.start();
+}
+
+// Initialize when page loads
+window.addEventListener('load', initializeGraph);
+
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
     const app = new Application();
