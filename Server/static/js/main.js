@@ -1,7 +1,7 @@
-import { GraphManager } from './core/GraphManager.js';
-import { NodeManager } from './core/NodeManager.js';
-import { ApiClient } from './api/ApiClient.js';
-import { WebSocketClient } from './api/WebSocketClient.js';
+import GraphManager from './core/GraphManager.js';
+import NodeManager from './core/NodeManager.js';
+import ApiClient from './api/ApiClient.js';
+import WebSocketClient from './api/WebSocketClient.js';
 
 class Application {
     constructor() {
