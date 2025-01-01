@@ -16,15 +16,12 @@ class KnowledgeGraphNode extends LGraphNode {
         // 添加 UI 控件
         this.addLabelsControl();
         this.addPropertiesControl();
-        this.refreshControls();
+        //this.refreshControls();
     }
 
     // 添加标签控件
     addLabelsControl() {
-        // 如果控件已经存在，先移除
-        if (this.labelsWidget) {
-            this.removeWidget(this.labelsWidget);
-        }
+        
         // 添加新的控件
         this.labelsWidget = this.addWidget("text", "Labels", this.labels.join(", "), (value) => {
             this.labels = value.split(",").map(label => label.trim());
@@ -33,10 +30,7 @@ class KnowledgeGraphNode extends LGraphNode {
 
     // 添加属性控件
     addPropertiesControl() {
-        // 移除所有现有的属性控件
-        if (this.propertyWidgets) {
-            this.propertyWidgets.forEach(widget => this.removeWidget(widget));
-        }
+        
         this.propertyWidgets = [];
 
         // 添加属性控件
