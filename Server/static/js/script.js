@@ -16,6 +16,7 @@ class KnowledgeGraphNode extends LGraphNode {
         // 添加 UI 控件
         this.addLabelsControl();
         this.addPropertiesControl();
+        this.refreshControls();
     }
 
     // 添加标签控件
