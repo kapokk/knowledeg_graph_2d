@@ -161,36 +161,36 @@ let graph;
 let canvas;
 
 // Full screen canvas setup and graph initialization
-async function initializeGraph() {
+async initializeGraph() {
     // Setup canvas dimensions
     const canvasElement = document.getElementById('graph-container');
     canvasElement.width = window.innerWidth;
     canvasElement.height = window.innerHeight;
 
     // Create and setup the graph
-    graph = new LGraph();
-    canvas = new LGraphCanvas("#graph-container", graph);
+    this.graph = new LGraph();
+    this.canvas = new LGraphCanvas("#graph-container", this.graph);
 
     // Load initial data from Neo4j
-    await loadGraphData();
+    await this.loadGraphData();
 
     // Setup WebSocket listeners
-    setupWebSocketListeners();
+    this.setupWebSocketListeners();
 
     // Setup LiteGraph event handlers
-    setupGraphEventHandlers();
+    this.setupGraphEventHandlers();
 
     // Start the graph
-    graph.start();
+    this.graph.start();
 }
 
-async function loadGraphData() {
+async loadGraphData() {
     try {
-        const nodes = await apiClient.getNodes();
+        const nodes = await this.apiClient.getNodes();
         nodes.forEach(node => {
-            const lgNode = createKnowledgeGraphNode(node);
-            graph.add(lgNode);
-            nodeMap.set(node.id, lgNode);
+            const lgNode = this.createKnowledgeGraphNode(node);
+            this.graph.add(lgNode);
+            this.nodeMap.set(node.id, lgNode);
         });
     } catch (error) {
         console.error('Failed to load graph data:', error);
@@ -204,17 +204,17 @@ function createKnowledgeGraphNode(nodeData) {
     return node;
 }
 
-function setupWebSocketListeners() {
-    wsClient.connect();
+setupWebSocketListeners() {
+    this.wsClient.connect();
 
-    wsClient.on('node_created', (nodeData) => {
-        const lgNode = createKnowledgeGraphNode(nodeData);
-        graph.add(lgNode);
-        nodeMap.set(nodeData.id, lgNode);
+    this.wsClient.on('node_created', (nodeData) => {
+        const lgNode = this.createKnowledgeGraphNode(nodeData);
+        this.graph.add(lgNode);
+        this.nodeMap.set(nodeData.id, lgNode);
     });
 
-    wsClient.on('node_updated', (nodeData) => {
-        const lgNode = nodeMap.get(nodeData.id);
+    this.wsClient.on('node_updated', (nodeData) => {
+        const lgNode = this.nodeMap.get(nodeData.id);
         if (lgNode) {
             lgNode.properties = nodeData.properties;
             lgNode.title = nodeData.labels.join(', ');
@@ -222,11 +222,11 @@ function setupWebSocketListeners() {
         }
     });
 
-    wsClient.on('node_deleted', (nodeData) => {
-        const lgNode = nodeMap.get(nodeData.id);
+    this.wsClient.on('node_deleted', (nodeData) => {
+        const lgNode = this.nodeMap.get(nodeData.id);
         if (lgNode) {
-            graph.remove(lgNode);
-            nodeMap.delete(nodeData.id);
+            this.graph.remove(lgNode);
+            this.nodeMap.delete(nodeData.id);
         }
     });
 }
@@ -270,7 +270,11 @@ function setupGraphEventHandlers() {
 }
 
 // Initialize when page loads
-window.addEventListener('load', initializeGraph);
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new Application();
+    app.initialize();
+    window.addEventListener('load', () => app.initializeGraph());
+});
 
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
