@@ -3,6 +3,8 @@ import NodeManager from './core/NodeManager.js';
 import ApiClient from './api/ApiClient.js';
 import WebSocketClient from './api/WebSocketClient.js';
 
+
+
 class KnowledgeGraphNode extends LGraphNode {
     constructor(node) {
         super();
@@ -161,36 +163,36 @@ let graph;
 let canvas;
 
 // Full screen canvas setup and graph initialization
-async initializeGraph() {
+async function initializeGraph() {
     // Setup canvas dimensions
     const canvasElement = document.getElementById('graph-container');
     canvasElement.width = window.innerWidth;
     canvasElement.height = window.innerHeight;
 
     // Create and setup the graph
-    this.graph = new LGraph();
-    this.canvas = new LGraphCanvas("#graph-container", this.graph);
+    graph = new LGraph();
+    canvas = new LGraphCanvas("#graph-container", graph);
 
     // Load initial data from Neo4j
-    await this.loadGraphData();
+    await loadGraphData();
 
     // Setup WebSocket listeners
-    this.setupWebSocketListeners();
+    setupWebSocketListeners();
 
     // Setup LiteGraph event handlers
-    this.setupGraphEventHandlers();
+    setupGraphEventHandlers();
 
     // Start the graph
-    this.graph.start();
+    graph.start();
 }
 
-async loadGraphData() {
+async function loadGraphData() {
     try {
         const nodes = await this.apiClient.getNodes();
         nodes.forEach(node => {
-            const lgNode = this.createKnowledgeGraphNode(node);
-            this.graph.add(lgNode);
-            this.nodeMap.set(node.id, lgNode);
+            const lgNode = createKnowledgeGraphNode(node);
+            graph.add(lgNode);
+            nodeMap.set(node.id, lgNode);
         });
     } catch (error) {
         console.error('Failed to load graph data:', error);
@@ -204,17 +206,17 @@ function createKnowledgeGraphNode(nodeData) {
     return node;
 }
 
-setupWebSocketListeners() {
+function setupWebSocketListeners() {
     this.wsClient.connect();
 
     this.wsClient.on('node_created', (nodeData) => {
-        const lgNode = this.createKnowledgeGraphNode(nodeData);
-        this.graph.add(lgNode);
-        this.nodeMap.set(nodeData.id, lgNode);
+        const lgNode = createKnowledgeGraphNode(nodeData);
+        graph.add(lgNode);
+        nodeMap.set(nodeData.id, lgNode);
     });
 
     this.wsClient.on('node_updated', (nodeData) => {
-        const lgNode = this.nodeMap.get(nodeData.id);
+        const lgNode = nodeMap.get(nodeData.id);
         if (lgNode) {
             lgNode.properties = nodeData.properties;
             lgNode.title = nodeData.labels.join(', ');
@@ -223,17 +225,17 @@ setupWebSocketListeners() {
     });
 
     this.wsClient.on('node_deleted', (nodeData) => {
-        const lgNode = this.nodeMap.get(nodeData.id);
+        const lgNode = nodeMap.get(nodeData.id);
         if (lgNode) {
-            this.graph.remove(lgNode);
-            this.nodeMap.delete(nodeData.id);
+            graph.remove(lgNode);
+            nodeMap.delete(nodeData.id);
         }
     });
 }
 
 function setupGraphEventHandlers() {
     canvas.onNodeAdded = function(node) {
-        apiClient.createNode(['CustomNode'], node.properties)
+        this.appClient.createNode(['CustomNode'], node.properties)
             .then(createdNode => {
                 nodeMap.set(createdNode.id, node);
             })
@@ -243,7 +245,7 @@ function setupGraphEventHandlers() {
     canvas.onNodeRemoved = function(node) {
         const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
         if (nodeId) {
-            apiClient.deleteNode(nodeId)
+            this.appClient.deleteNode(nodeId)
                 .catch(console.error);
         }
     };
@@ -252,7 +254,7 @@ function setupGraphEventHandlers() {
         const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
         if (nodeId) {
             const properties = { ...node.properties, [property]: value };
-            apiClient.updateNode(nodeId, properties)
+            this.appClient.updateNode(nodeId, properties)
                 .catch(console.error);
         }
     };
@@ -262,7 +264,7 @@ function setupGraphEventHandlers() {
             const startNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.origin.node)?.[0];
             const endNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.target.node)?.[0];
             if (startNodeId && endNodeId) {
-                apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+                this.appClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
                     .catch(console.error);
             }
         }
@@ -270,11 +272,7 @@ function setupGraphEventHandlers() {
 }
 
 // Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    const app = new Application();
-    app.initialize();
-    window.addEventListener('load', () => app.initializeGraph());
-});
+window.addEventListener('load', initializeGraph);
 
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
