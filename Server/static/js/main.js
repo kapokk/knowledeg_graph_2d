@@ -187,21 +187,85 @@ class Application {
             this.graphManager.handleWindowResize();
         });
     }
-}
 
-
-async function loadGraphData() {
-    try {
+    async loadGraphData() {
         const nodes = await this.apiClient.getNodes();
         nodes.forEach(node => {
             const lgNode = createKnowledgeGraphNode(node);
-            graph.add(lgNode);
-            nodeMap.set(node.id, lgNode);
+            this.graph.add(lgNode);
+            this.nodeMap.set(node.id, lgNode);
         });
-    } catch (error) {
-        console.error('Failed to load graph data:', error);
     }
+
+    setupWebSocketListeners() {
+        this.wsClient.connect();
+    
+        this.wsClient.on('node_created', (nodeData) => {
+            const lgNode = createKnowledgeGraphNode(nodeData);
+            graph.add(lgNode);
+            nodeMap.set(nodeData.id, lgNode);
+        });
+    
+        this.wsClient.on('node_updated', (nodeData) => {
+            const lgNode = nodeMap.get(nodeData.id);
+            if (lgNode) {
+                lgNode.properties = nodeData.properties;
+                lgNode.title = nodeData.labels.join(', ');
+                lgNode.setDirtyCanvas(true, true);
+            }
+        });
+    
+        this.wsClient.on('node_deleted', (nodeData) => {
+            const lgNode = nodeMap.get(nodeData.id);
+            if (lgNode) {
+                graph.remove(lgNode);
+                nodeMap.delete(nodeData.id);
+            }
+        });
+    }
+    
+    setupGraphEventHandlers() {
+        this.canvas.onAdded = function(node) {
+            this.appClient.createNode(['CustomNode'], node.properties)
+                .then(createdNode => {
+                    nodeMap.set(createdNode.id, node);
+                })
+                .catch(console.error);
+        };
+    
+        this.canvas.onNodeRemoved = function(node) {
+            const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
+            if (nodeId) {
+                this.appClient.deleteNode(nodeId)
+                    .catch(console.error);
+            }
+        };
+    
+        this.canvas.onNodePropertyChanged = function(node, property, value) {
+            const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
+            if (nodeId) {
+                const properties = { ...node.properties, [property]: value };
+                this.appClient.updateNode(nodeId, properties)
+                    .catch(console.error);
+            }
+        };
+    
+        this.canvas.onConnectionChange = function(linkInfo) {
+            if (linkInfo.link) {
+                const startNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.origin.node)?.[0];
+                const endNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.target.node)?.[0];
+                if (startNodeId && endNodeId) {
+                    this.appClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+                        .catch(console.error);
+                }
+            }
+        };
+    }
+    
 }
+
+
+
 
 function createKnowledgeGraphNode(nodeData) {
     const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData);
@@ -210,70 +274,6 @@ function createKnowledgeGraphNode(nodeData) {
     return node;
 }
 
-function setupWebSocketListeners() {
-    this.wsClient.connect();
-
-    this.wsClient.on('node_created', (nodeData) => {
-        const lgNode = createKnowledgeGraphNode(nodeData);
-        graph.add(lgNode);
-        nodeMap.set(nodeData.id, lgNode);
-    });
-
-    this.wsClient.on('node_updated', (nodeData) => {
-        const lgNode = nodeMap.get(nodeData.id);
-        if (lgNode) {
-            lgNode.properties = nodeData.properties;
-            lgNode.title = nodeData.labels.join(', ');
-            lgNode.setDirtyCanvas(true, true);
-        }
-    });
-
-    this.wsClient.on('node_deleted', (nodeData) => {
-        const lgNode = nodeMap.get(nodeData.id);
-        if (lgNode) {
-            graph.remove(lgNode);
-            nodeMap.delete(nodeData.id);
-        }
-    });
-}
-
-function setupGraphEventHandlers() {
-    canvas.onNodeAdded = function(node) {
-        this.appClient.createNode(['CustomNode'], node.properties)
-            .then(createdNode => {
-                nodeMap.set(createdNode.id, node);
-            })
-            .catch(console.error);
-    };
-
-    canvas.onNodeRemoved = function(node) {
-        const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
-        if (nodeId) {
-            this.appClient.deleteNode(nodeId)
-                .catch(console.error);
-        }
-    };
-
-    canvas.onNodePropertyChanged = function(node, property, value) {
-        const nodeId = [...nodeMap.entries()].find(([id, n]) => n === node)?.[0];
-        if (nodeId) {
-            const properties = { ...node.properties, [property]: value };
-            this.appClient.updateNode(nodeId, properties)
-                .catch(console.error);
-        }
-    };
-
-    canvas.onConnectionChange = function(linkInfo) {
-        if (linkInfo.link) {
-            const startNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.origin.node)?.[0];
-            const endNodeId = [...nodeMap.entries()].find(([id, n]) => n === linkInfo.link.target.node)?.[0];
-            if (startNodeId && endNodeId) {
-                this.appClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
-                    .catch(console.error);
-            }
-        }
-    };
-}
 
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
