@@ -8,13 +8,12 @@ sys.path.append(project_root)
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
-from database.Neo4jStuff import get_graph_instance
+from database.Neo4jDataProcessor import Node, Link
 import threading
 import time
 
 app = Flask(__name__, static_folder='static', static_url_path='')
 CORS(app)  # 允许跨域请求
-GRAPH = get_graph_instance()
 socketio = SocketIO(app, 
                    cors_allowed_origins="*",
                    async_mode='threading',
@@ -61,13 +60,13 @@ def poll_neo4j_changes():
 
     while True:
         # 获取当前节点和关系
-        current_nodes = set(node['node_id'] for node in GRAPH.get_all_nodes())
-        current_relationships = set(rel['rel_id'] for rel in GRAPH.get_all_relationships())
+        current_nodes = set(node.id for node in Node.get_all_nodes())
+        current_relationships = set(link.id for link in Link.search(limit=1000))
 
         # 检查新增节点
         new_nodes = current_nodes - last_nodes
         for node_id in new_nodes:
-            node = GRAPH.get_node_by_id(node_id)
+            node = Node.from_id(node_id).to_dict()
             broadcast_node_created(node)
 
         # 检查删除节点
@@ -78,7 +77,7 @@ def poll_neo4j_changes():
         # 检查新增关系
         new_relationships = current_relationships - last_relationships
         for rel_id in new_relationships:
-            relationship = GRAPH.get_relationship_by_id(rel_id)
+            relationship = Link.from_id(rel_id).to_dict()
             broadcast_relationship_created(relationship)
 
         # 检查删除关系
@@ -104,16 +103,15 @@ def home():
 @app.route('/api/nodes', methods=['GET', 'POST'])
 def handle_nodes():
     if request.method == 'GET':
-        nodes = GRAPH.get_all_nodes()
+        nodes = [node.to_dict() for node in Node.get_all_nodes()]
         return jsonify({
             'code': 200,
             'data': nodes
         })
     elif request.method == 'POST':
         data = request.json
-        labels = data.get('labels', ['Node'])
         properties = data.get('properties', {})
-        node = GRAPH.add_node(labels, properties)
+        node = Node.from_node("Node", properties)
         return jsonify({
             'code': 201,
             'data': node
@@ -122,20 +120,24 @@ def handle_nodes():
 @app.route('/api/nodes/<int:node_id>', methods=['GET', 'PUT', 'DELETE'])
 def handle_node(node_id):
     if request.method == 'GET':
-        node = GRAPH.get_node_by_id(node_id)
+        node = Node.from_id(node_id).to_dict()
         return jsonify({
             'code': 200,
             'data': node
         })
     elif request.method == 'PUT':
         properties = request.json.get('properties', {})
-        updated_node = GRAPH.update_node_by_node_id(node_id, properties)
+        node = Node.from_id(node_id)
+        node.update(properties)
+        updated_node = node.to_dict()
         return jsonify({
             'code': 200,
             'data': updated_node
         })
     elif request.method == 'DELETE':
-        deleted_node = GRAPH.remove_node_by_id(node_id)
+        node = Node.from_id(node_id)
+        node.remove()
+        deleted_node = node.to_dict()
         return jsonify({
             'code': 204,
             'data': deleted_node
@@ -145,7 +147,7 @@ def handle_node(node_id):
 @app.route('/api/relationships', methods=['GET', 'POST'])
 def handle_relationships():
     if request.method == 'GET':
-        relationships = GRAPH.get_all_relationships()
+        relationships = [link.to_dict() for link in Link.search(limit=1000)]
         return jsonify({
             'code': 200,
             'data': relationships
@@ -156,7 +158,8 @@ def handle_relationships():
         end_node_id = data.get('endNodeId')
         rel_type = data.get('type', 'CONNECTS_TO')
         properties = data.get('properties', {})
-        relationship = GRAPH.add_relationship_by_nodes_id(start_node_id, end_node_id, rel_type, properties)
+        start_node = Node.from_id(start_node_id)
+        relationship = start_node.connect(end_node_id, rel_type, properties).to_dict()
         return jsonify({
             'code': 201,
             'data': relationship
@@ -165,20 +168,24 @@ def handle_relationships():
 @app.route('/api/relationships/<int:relationship_id>', methods=['GET', 'PUT', 'DELETE'])
 def handle_relationship(relationship_id):
     if request.method == 'GET':
-        relationship = GRAPH.get_relationship_by_id(relationship_id)
+        relationship = Link.from_id(relationship_id).to_dict()
         return jsonify({
             'code': 200,
             'data': relationship
         })
     elif request.method == 'PUT':
         properties = request.json.get('properties', {})
-        updated_relationship = GRAPH.update_relationship_by_rel_id(relationship_id, properties)
+        relationship = Link.from_id(relationship_id)
+        relationship.update(properties)
+        updated_relationship = relationship.to_dict()
         return jsonify({
             'code': 200,
             'data': updated_relationship
         })
     elif request.method == 'DELETE':
-        deleted_relationship = GRAPH.remove_relationship_by_id(relationship_id)
+        relationship = Link.from_id(relationship_id)
+        relationship.remove()
+        deleted_relationship = relationship.to_dict()
         return jsonify({
             'code': 204,
             'data': deleted_relationship
