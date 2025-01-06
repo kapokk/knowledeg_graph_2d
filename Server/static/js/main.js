@@ -164,6 +164,9 @@ class Application {
         this.graph = new LGraph();
         this.canvas = new LGraphCanvas("#graph-container", this.graph);
 
+        // Set graph reference in node manager
+        this.nodeManager.setGraph(this.graph);
+
         // Load initial data from Neo4j
         await this.loadGraphData();
 
@@ -219,78 +222,28 @@ class Application {
     }
     
     setupGraphEventHandlers() {
-        // 在 KnowledgeGraphNode 类中添加事件处理
+        // 将事件处理委托给 NodeManager
         KnowledgeGraphNode.prototype.onAdded = function() {
-            const labels = this.labels || ['CustomNode'];
-            if (!this.apiClient) {
-                console.error('API client not initialized');
-                return;
+            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
+                this.graph.app.nodeManager.handleNodeAdded(this);
             }
-            
-            this.apiClient.createNode(labels, this.properties)
-                .then(createdNode => {
-                    // 更新节点ID和属性
-                    this.id = createdNode.id;
-                    this.properties = createdNode.properties;
-                    this.labels = createdNode.labels;
-                    this.title = createdNode.labels.join(', ');
-                    
-                    // 更新控件
-                    this.refreshControls();
-                    
-                    // 更新节点映射
-                    if (this.graph && this.graph.app) {
-                        this.graph.app.nodeMap.set(createdNode.id, this);
-                    }
-                })
-                .catch(error => {
-                    console.error('Failed to create node:', error);
-                    alert('Failed to create node. Please try again.');
-                });
         };
 
-        KnowledgeGraphNode.prototype.onRemoved = ()=>{
-            const nodeId = [...this.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
-            if (nodeId) {
-                this.apiClient.deleteNode(nodeId)
-                    .catch(console.error);
+        KnowledgeGraphNode.prototype.onRemoved = function() {
+            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
+                this.graph.app.nodeManager.handleNodeRemoved(this);
             }
         };
 
         KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
-            if (!this.apiClient) {
-                console.error('API client not initialized');
-                return;
+            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
+                this.graph.app.nodeManager.handlePropertyChanged(this, property, value);
             }
-            
-            if (!this.id) {
-                console.error('Node ID not found');
-                return;
-            }
-
-            const properties = { ...this.properties, [property]: value };
-            this.apiClient.updateNode(this.id, properties)
-                .then(updatedNode => {
-                    // 更新节点属性
-                    this.properties = updatedNode.properties;
-                    this.setDirtyCanvas(true, true);
-                })
-                .catch(error => {
-                    console.error('Failed to update node:', error);
-                    // 回滚属性更改
-                    this.properties[property] = this.properties[property];
-                    this.setDirtyCanvas(true, true);
-                });
         };
 
-        KnowledgeGraphNode.prototype.onConnectionsChange = (type, slot, connected, link_info, input_info)=> {
-            if (connected && type === LiteGraph.OUTPUT) {
-                const startNodeId = [...this.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
-                const endNodeId = [...this.nodeMap.entries()].find(([id, n]) => n === link_info.target.node)?.[0];
-                if (startNodeId && endNodeId) {
-                    this.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
-                        .catch(console.error);
-                }
+        KnowledgeGraphNode.prototype.onConnectionsChange = function(type, slot, connected, link_info, input_info) {
+            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
+                this.graph.app.nodeManager.handleConnectionsChange(this, type, slot, connected, link_info, input_info);
             }
         };
 
