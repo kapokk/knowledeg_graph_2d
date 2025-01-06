@@ -198,38 +198,23 @@ class Application {
     }
 
     async loadGraphData() {
-        const nodes = await this.apiClient.getNodes();
-        nodes.forEach(node => {
-            const lgNode = createKnowledgeGraphNode(node);
-            this.graph.add(lgNode);
-            this.nodeMap.set(node.id, lgNode);
-        });
+        await this.nodeManager.loadInitialData();
+        // NodeManager will handle adding nodes to the graph and maintaining nodeMap
     }
 
     setupWebSocketListeners() {
         this.wsClient.connect();
     
         this.wsClient.on('node_created', (nodeData) => {
-            const lgNode = createKnowledgeGraphNode(nodeData);
-            graph.add(lgNode);
-            nodeMap.set(nodeData.id, lgNode);
+            this.nodeManager.handleNodeCreated(nodeData);
         });
     
         this.wsClient.on('node_updated', (nodeData) => {
-            const lgNode = nodeMap.get(nodeData.id);
-            if (lgNode) {
-                lgNode.properties = nodeData.properties;
-                lgNode.title = nodeData.labels.join(', ');
-                lgNode.setDirtyCanvas(true, true);
-            }
+            this.nodeManager.handleNodeUpdated(nodeData);
         });
     
         this.wsClient.on('node_deleted', (nodeData) => {
-            const lgNode = nodeMap.get(nodeData.id);
-            if (lgNode) {
-                graph.remove(lgNode);
-                nodeMap.delete(nodeData.id);
-            }
+            this.nodeManager.handleNodeDeleted(nodeData);
         });
     }
     
@@ -323,13 +308,7 @@ class Application {
 
 
 
-function createKnowledgeGraphNode(nodeData) {
-    const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData);
-    node.title = nodeData.labels.join(', ');
-    node.pos = [Math.random() * 500, Math.random() * 500];
-    node.id = nodeData.id; // 确保设置节点ID
-    return node;
-}
+// Removed createKnowledgeGraphNode since NodeManager handles this now
 
 
 // 启动应用
