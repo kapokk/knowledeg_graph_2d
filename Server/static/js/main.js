@@ -222,37 +222,26 @@ class Application {
     }
     
     setupGraphEventHandlers() {
-        // 将事件处理委托给 NodeManager
-        KnowledgeGraphNode.prototype.onAdded = function() {
-            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
-                this.graph.app.nodeManager.handleNodeAdded(this);
-            }
+        // 将事件处理委托给 graphManager
+        KnowledgeGraphNode.prototype.onAdded = () => {
+            this.graphManager.handleNodeAdded(this);
         };
 
-        KnowledgeGraphNode.prototype.onRemoved = function() {
-            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
-                this.graph.app.nodeManager.handleNodeRemoved(this);
-            }
+        KnowledgeGraphNode.prototype.onRemoved = () => {
+            this.graphManager.handleNodeRemoved(this);
         };
 
-        KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
-            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
-                this.graph.app.nodeManager.handlePropertyChanged(this, property, value);
-            }
+        KnowledgeGraphNode.prototype.onPropertyChanged = (property, value) => {
+            this.graphManager.handlePropertyChanged(this, property, value);
         };
 
-        KnowledgeGraphNode.prototype.onConnectionsChange = function(type, slot, connected, link_info, input_info) {
-            if (this.graph && this.graph.app && this.graph.app.nodeManager) {
-                this.graph.app.nodeManager.handleConnectionsChange(this, type, slot, connected, link_info, input_info);
-            }
+        KnowledgeGraphNode.prototype.onConnectionsChange = (type, slot, connected, link_info, input_info) => {
+            this.graphManager.handleConnectionsChange(this, type, slot, connected, link_info, input_info);
         };
 
-        // 将应用实例和API客户端附加到节点
-        KnowledgeGraphNode.prototype.onConfigure = function() {
-            if (this.graph && this.graph.app) {
-                this.app = this.graph.app;
-                this.apiClient = this.graph.app.apiClient;
-            }
+        // 将API客户端附加到节点
+        KnowledgeGraphNode.prototype.onConfigure = () => {
+            this.apiClient = this.graphManager.apiClient;
         };
     }
     
