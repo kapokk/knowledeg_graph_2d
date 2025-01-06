@@ -13,6 +13,7 @@ class KnowledgeGraphNode extends LGraphNode {
         let properties = node.properties
         this.title = "Knowledge Graph Node";
         this.size = [300, 200];
+        this.apiClient = null; // 用于存储apiClient引用
 
         // 初始化标签和属性
         this.labels = Array.isArray(labels) ? labels : [labels]; // 确保 labels 是数组
@@ -234,11 +235,28 @@ class Application {
     
     setupGraphEventHandlers() {
         // 在 KnowledgeGraphNode 类中添加事件处理
-        KnowledgeGraphNode.prototype.onAdded = ()=>{
+        KnowledgeGraphNode.prototype.onAdded = function() {
             const labels = this.labels || ['CustomNode'];
+            if (!this.apiClient) {
+                console.error('API client not initialized');
+                return;
+            }
+            
             this.apiClient.createNode(labels, this.properties)
                 .then(createdNode => {
-                    this.nodeMap.set(createdNode.id, this);
+                    // 更新节点ID和属性
+                    this.id = createdNode.id;
+                    this.properties = createdNode.properties;
+                    this.labels = createdNode.labels;
+                    this.title = createdNode.labels.join(', ');
+                    
+                    // 更新控件
+                    this.refreshControls();
+                    
+                    // 更新节点映射
+                    if (this.graph && this.graph.app) {
+                        this.graph.app.nodeMap.set(createdNode.id, this);
+                    }
                 })
                 .catch(error => {
                     console.error('Failed to create node:', error);
@@ -254,13 +272,30 @@ class Application {
             }
         };
 
-        KnowledgeGraphNode.prototype.onPropertyChanged = (property, value) =>{
-            const nodeId = [...this.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
-            if (nodeId) {
-                const properties = { ...this.properties, [property]: value };
-                this.apiClient.updateNode(nodeId, properties)
-                    .catch(console.error);
+        KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
+            if (!this.apiClient) {
+                console.error('API client not initialized');
+                return;
             }
+            
+            if (!this.id) {
+                console.error('Node ID not found');
+                return;
+            }
+
+            const properties = { ...this.properties, [property]: value };
+            this.apiClient.updateNode(this.id, properties)
+                .then(updatedNode => {
+                    // 更新节点属性
+                    this.properties = updatedNode.properties;
+                    this.setDirtyCanvas(true, true);
+                })
+                .catch(error => {
+                    console.error('Failed to update node:', error);
+                    // 回滚属性更改
+                    this.properties[property] = this.properties[property];
+                    this.setDirtyCanvas(true, true);
+                });
         };
 
         KnowledgeGraphNode.prototype.onConnectionsChange = (type, slot, connected, link_info, input_info)=> {
@@ -274,9 +309,12 @@ class Application {
             }
         };
 
-        // 将应用实例附加到节点
+        // 将应用实例和API客户端附加到节点
         KnowledgeGraphNode.prototype.onConfigure = function() {
-            this.app = this.graph.app;
+            if (this.graph && this.graph.app) {
+                this.app = this.graph.app;
+                this.apiClient = this.graph.app.apiClient;
+            }
         };
     }
     
@@ -289,6 +327,7 @@ function createKnowledgeGraphNode(nodeData) {
     const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData);
     node.title = nodeData.labels.join(', ');
     node.pos = [Math.random() * 500, Math.random() * 500];
+    node.id = nodeData.id; // 确保设置节点ID
     return node;
 }
 
