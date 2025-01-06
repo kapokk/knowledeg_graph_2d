@@ -99,8 +99,7 @@ class KnowledgeGraphNode extends LGraphNode {
     }
 }
 
-// 注册节点类型
-LiteGraph.registerNodeType("knowledge/KnowledgeGraphNode", KnowledgeGraphNode);
+
 
 class Application {
     constructor() {
@@ -124,6 +123,13 @@ class Application {
 
     async initialize() {
         try {
+
+            // 设置事件监听
+            this.setupEventListeners();
+
+             // 注册节点类型
+            LiteGraph.registerNodeType("knowledge/KnowledgeGraphNode", KnowledgeGraphNode);
+
             // 初始化 WebSocket 连接
             this.wsClient.connect();
             
@@ -133,11 +139,13 @@ class Application {
             // 加载初始数据
             await this.nodeManager.loadInitialData();
             
-            // 设置事件监听
-            this.setupEventListeners();
+            
+
+           
 
             // 初始化画布和图形
             await this.initializeGraph();
+            
             
             console.log('Application initialized successfully');
         } catch (error) {
@@ -226,11 +234,11 @@ class Application {
     
     setupGraphEventHandlers() {
         // 在 KnowledgeGraphNode 类中添加事件处理
-        KnowledgeGraphNode.prototype.onAdded = function() {
+        KnowledgeGraphNode.prototype.onAdded = ()=>{
             const labels = this.labels || ['CustomNode'];
-            this.app.apiClient.createNode(labels, this.properties)
+            this.apiClient.createNode(labels, this.properties)
                 .then(createdNode => {
-                    this.app.nodeMap.set(createdNode.id, this);
+                    this.nodeMap.set(createdNode.id, this);
                 })
                 .catch(error => {
                     console.error('Failed to create node:', error);
@@ -238,29 +246,29 @@ class Application {
                 });
         };
 
-        KnowledgeGraphNode.prototype.onRemoved = function() {
-            const nodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
+        KnowledgeGraphNode.prototype.onRemoved = ()=>{
+            const nodeId = [...this.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
             if (nodeId) {
-                this.app.apiClient.deleteNode(nodeId)
+                this.apiClient.deleteNode(nodeId)
                     .catch(console.error);
             }
         };
 
-        KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
-            const nodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
+        KnowledgeGraphNode.prototype.onPropertyChanged = (property, value) =>{
+            const nodeId = [...this.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
             if (nodeId) {
                 const properties = { ...this.properties, [property]: value };
-                this.app.apiClient.updateNode(nodeId, properties)
+                this.apiClient.updateNode(nodeId, properties)
                     .catch(console.error);
             }
         };
 
-        KnowledgeGraphNode.prototype.onConnectionsChange = function(type, slot, connected, link_info, input_info) {
+        KnowledgeGraphNode.prototype.onConnectionsChange = (type, slot, connected, link_info, input_info)=> {
             if (connected && type === LiteGraph.OUTPUT) {
-                const startNodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
-                const endNodeId = [...this.app.nodeMap.entries()].find(([id, n]) => n === link_info.target.node)?.[0];
+                const startNodeId = [...this.nodeMap.entries()].find(([id, n]) => n === this)?.[0];
+                const endNodeId = [...this.nodeMap.entries()].find(([id, n]) => n === link_info.target.node)?.[0];
                 if (startNodeId && endNodeId) {
-                    this.app.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+                    this.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
                         .catch(console.error);
                 }
             }
