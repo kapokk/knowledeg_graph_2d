@@ -255,7 +255,7 @@ class Application {
                 // 处理连接创建
                 if (isConnected && type === LiteGraph.OUTPUT) {
                     const startNode = node;
-                    const endNode = link_info.target.node;
+                    const endNode = application.nodeManager.nodeMap.get(link_info.target_id)
                     if (endNode instanceof KnowledgeGraphNode) {
                         application.nodeManager.handleConnectionsChange(
                             startNode,
