@@ -226,6 +226,9 @@ class Application {
     }
     
     setupGraphEventHandlers() {
+
+        let application = this
+
         // 使用 LiteGraph 的事件系统
         this.graph.onNodeAdded = (node) => {
             if (node instanceof KnowledgeGraphNode) {
@@ -241,12 +244,12 @@ class Application {
         };
 
         // 自定义属性变化处理
-        KnowledgeGraphNode.prototype.onPropertyChanged = (property, value) => {
-            this.nodeManager.handlePropertyChanged(this, property, value);
+        KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
+            application.nodeManager.handlePropertyChanged(this, property, value);
         };
 
         // 连接变化处理
-        this.graph.onConnectionChange = (link, isConnected) => {
+        KnowledgeGraphNode.prototype.onConnectionsChange = (type,node, info) => {
             if (isConnected) {
                 const startNode = link.origin.node;
                 const endNode = link.target.node;

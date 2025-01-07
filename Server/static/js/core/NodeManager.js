@@ -66,7 +66,7 @@ export default class NodeManager {
                 node.labels = createdNode.labels;
                 node.title = createdNode.labels.join(', ');
                 this.nodeMap.set(createdNode.id, node);
-                
+                node.refreshControls()
             })
             .catch(error => {
                 console.error('Failed to create node:', error);
@@ -75,7 +75,7 @@ export default class NodeManager {
     }
 
     handleNodeRemoved(node) {
-        const nodeId = [...this.nodeMap.entries()].find(([id, n]) => n === node)?.[0];
+        const nodeId = node.id
         if (nodeId) {
             this.apiClient.deleteNode(nodeId)
                 .catch(console.error);
@@ -92,12 +92,12 @@ export default class NodeManager {
         this.apiClient.updateNode(node.id, properties)
             .then(updatedNode => {
                 node.properties = updatedNode.properties;
-                node.setDirtyCanvas(true, true);
+                node.refreshControls()
             })
             .catch(error => {
                 console.error('Failed to update node:', error);
                 node.properties[property] = node.properties[property];
-                node.setDirtyCanvas(true, true);
+                node.refreshControls()
             });
     }
 
