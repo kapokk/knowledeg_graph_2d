@@ -147,7 +147,7 @@ def handle_node(node_id):
 @app.route('/api/relationships', methods=['GET', 'POST'])
 def handle_relationships():
     if request.method == 'GET':
-        relationships = [link.to_dict() for link in Link.search(limit=1000)]
+        relationships = [link.to_dict() for link in Link.get_all_relationships()]
         return jsonify({
             'code': 200,
             'data': relationships.to_dict()
