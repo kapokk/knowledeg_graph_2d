@@ -262,7 +262,13 @@ class Application {
                             type,
                             slot,
                             isConnected,
-                            link_info,
+                            {
+                                origin_id: startNode.id,
+                                origin_slot: link_info.origin_slot,
+                                target_id: endNode.id,
+                                target_slot: link_info.target_slot,
+                                type: link_info.type || ""
+                            },
                             input_info
                         );
                     }
@@ -277,7 +283,14 @@ class Application {
                             type,
                             slot,
                             isConnected,
-                            link_info,
+                            {
+                                origin_id: startNode.id,
+                                origin_slot: link_info.origin_slot,
+                                target_id: endNode.id,
+                                target_slot: link_info.target_slot,
+                                type: link_info.type || "",
+                                relationshipId: link_info.relationshipId
+                            },
                             input_info
                         );
                     }

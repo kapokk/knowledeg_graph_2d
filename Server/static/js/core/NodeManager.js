@@ -102,16 +102,18 @@ export default class NodeManager {
     }
 
     handleConnectionsChange(node, type, slot, isConnected, link_info, input_info) {
-        const startNodeId = node.id;
-        const endNodeId = link_info.target.node.id;
+        const { origin_id, origin_slot, target_id, target_slot, type: link_type } = link_info;
         
-        if (!startNodeId || !endNodeId) {
+        if (!origin_id || !target_id) {
             return;
         }
 
         if (isConnected && type === LiteGraph.OUTPUT) {
             // 创建新连接
-            this.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+            this.apiClient.createRelationship(origin_id, target_id, link_type || 'CONNECTS_TO', {
+                origin_slot,
+                target_slot
+            })
                 .then(relationship => {
                     // 将关系ID存储在link_info中
                     link_info.relationshipId = relationship.id;
