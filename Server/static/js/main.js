@@ -222,21 +222,42 @@ class Application {
     }
     
     setupGraphEventHandlers() {
-        // 将事件处理委托给 graphManager
-        KnowledgeGraphNode.prototype.onAdded = (node) => {
-            this.nodeManager.handleNodeAdded(node);
+        // 使用 LiteGraph 的事件系统
+        this.graph.onNodeAdded = (node) => {
+            if (node instanceof KnowledgeGraphNode) {
+                this.nodeManager.handleNodeAdded(node);
+                node.refreshControls();
+            }
         };
 
-        KnowledgeGraphNode.prototype.onRemoved = () => {
-            this.nodeManager.handleNodeRemoved(this);
+        this.graph.onNodeRemoved = (node) => {
+            if (node instanceof KnowledgeGraphNode) {
+                this.nodeManager.handleNodeRemoved(node);
+            }
         };
 
+        // 自定义属性变化处理
         KnowledgeGraphNode.prototype.onPropertyChanged = (property, value) => {
             this.nodeManager.handlePropertyChanged(this, property, value);
         };
 
-        KnowledgeGraphNode.prototype.onConnectionsChange = (type, slot, connected, link_info, input_info) => {
-            this.nodeManager.handleConnectionsChange(this, type, slot, connected, link_info, input_info);
+        // 连接变化处理
+        this.graph.onConnectionChange = (link, isConnected) => {
+            if (isConnected) {
+                const startNode = link.origin.node;
+                const endNode = link.target.node;
+                if (startNode instanceof KnowledgeGraphNode && 
+                    endNode instanceof KnowledgeGraphNode) {
+                    this.nodeManager.handleConnectionsChange(
+                        startNode, 
+                        LiteGraph.OUTPUT, 
+                        link.origin.slot, 
+                        true, 
+                        link, 
+                        null
+                    );
+                }
+            }
         };
 
         // 将API客户端附加到节点
