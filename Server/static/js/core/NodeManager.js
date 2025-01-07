@@ -101,13 +101,29 @@ export default class NodeManager {
             });
     }
 
-    handleConnectionsChange(node, type, slot, connected, link_info, input_info) {
-        if (connected && type === LiteGraph.OUTPUT) {
-            const startNodeId = node.id;
-            const endNodeId = link_info.target.node.id;
-            if (startNodeId && endNodeId) {
-                this.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+    handleConnectionsChange(node, type, slot, isConnected, link_info, input_info) {
+        const startNodeId = node.id;
+        const endNodeId = link_info.target.node.id;
+        
+        if (!startNodeId || !endNodeId) {
+            return;
+        }
+
+        if (isConnected && type === LiteGraph.OUTPUT) {
+            // 创建新连接
+            this.apiClient.createRelationship(startNodeId, endNodeId, 'CONNECTS_TO', {})
+                .then(relationship => {
+                    // 将关系ID存储在link_info中
+                    link_info.relationshipId = relationship.id;
+                })
+                .catch(console.error);
+        } else if (!isConnected && type === LiteGraph.OUTPUT) {
+            // 删除连接
+            if (link_info.relationshipId) {
+                this.apiClient.deleteRelationship(link_info.relationshipId)
                     .catch(console.error);
+            } else {
+                console.warn('No relationship ID found for connection removal');
             }
         }
     }

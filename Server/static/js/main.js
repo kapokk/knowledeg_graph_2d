@@ -249,20 +249,38 @@ class Application {
         };
 
         // 连接变化处理
-        KnowledgeGraphNode.prototype.onConnectionsChange = (type,node, info) => {
-            if (isConnected) {
-                const startNode = link.origin.node;
-                const endNode = link.target.node;
-                if (startNode instanceof KnowledgeGraphNode && 
-                    endNode instanceof KnowledgeGraphNode) {
-                    this.nodeManager.handleConnectionsChange(
-                        startNode, 
-                        LiteGraph.OUTPUT, 
-                        link.origin.slot, 
-                        true, 
-                        link, 
-                        null
-                    );
+        KnowledgeGraphNode.prototype.onConnectionsChange = function(type, slot, isConnected, link_info, input_info) {
+            const node = this;
+            if (node instanceof KnowledgeGraphNode) {
+                // 处理连接创建
+                if (isConnected && type === LiteGraph.OUTPUT) {
+                    const startNode = node;
+                    const endNode = link_info.target.node;
+                    if (endNode instanceof KnowledgeGraphNode) {
+                        application.nodeManager.handleConnectionsChange(
+                            startNode,
+                            type,
+                            slot,
+                            isConnected,
+                            link_info,
+                            input_info
+                        );
+                    }
+                }
+                // 处理连接删除
+                else if (!isConnected && type === LiteGraph.OUTPUT) {
+                    const startNode = node;
+                    const endNode = link_info.target.node;
+                    if (endNode instanceof KnowledgeGraphNode) {
+                        application.nodeManager.handleConnectionsChange(
+                            startNode,
+                            type,
+                            slot,
+                            isConnected,
+                            link_info,
+                            input_info
+                        );
+                    }
                 }
             }
         };
