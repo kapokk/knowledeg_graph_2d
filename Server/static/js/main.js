@@ -223,8 +223,8 @@ class Application {
     
     setupGraphEventHandlers() {
         // 将事件处理委托给 graphManager
-        KnowledgeGraphNode.prototype.onAdded = () => {
-            this.nodeManager.handleNodeAdded(this);
+        KnowledgeGraphNode.prototype.onAdded = (node) => {
+            this.nodeManager.handleNodeAdded(node);
         };
 
         KnowledgeGraphNode.prototype.onRemoved = () => {
