@@ -94,6 +94,10 @@ class KnowledgeGraphNode extends LGraphNode {
 
     // 刷新控件
     refreshControls() {
+        // 清除现有控件
+        this.widgets = [];
+        
+        // 重新添加控件
         this.addLabelsControl();
         this.addPropertiesControl();
         this.setDirtyCanvas(true, true); // 强制刷新界面
