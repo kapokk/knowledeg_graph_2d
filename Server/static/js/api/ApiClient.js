@@ -12,6 +12,15 @@ export default class ApiClient {
         throw new Error('Failed to get nodes');
     }
 
+    async getRelationships() {
+        const response = await fetch(`${this.baseUrl}/relationships`);
+        const result = await response.json();
+        if (result.code === 200) {
+            return result.data;
+        }
+        throw new Error('Failed to get relationships');
+    }
+
     async createNode(labels, properties) {
         const response = await fetch(`${this.baseUrl}/nodes`, {
             method: 'POST',

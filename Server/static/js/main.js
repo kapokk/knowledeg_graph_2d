@@ -205,8 +205,20 @@ class Application {
     }
 
     async loadGraphData() {
+        // 加载节点数据
         await this.nodeManager.loadInitialData();
-        // NodeManager will handle adding nodes to the graph and maintaining nodeMap
+        
+        // 加载关系数据并创建连接
+        const relationships = await this.apiClient.getRelationships();
+        for (const rel of relationships) {
+            const startNode = this.nodeManager.nodeMap.get(rel.startNodeId);
+            const endNode = this.nodeManager.nodeMap.get(rel.endNodeId);
+            
+            if (startNode && endNode) {
+                // 创建图形连接
+                startNode.connect(endNode.id, rel.type, rel.properties);
+            }
+        }
     }
 
     setupWebSocketListeners() {
