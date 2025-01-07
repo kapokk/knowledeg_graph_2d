@@ -66,6 +66,7 @@ export default class NodeManager {
                 node.labels = createdNode.labels;
                 node.title = createdNode.labels.join(', ');
                 this.nodeMap.set(createdNode.id, node);
+                
             })
             .catch(error => {
                 console.error('Failed to create node:', error);

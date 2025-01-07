@@ -224,19 +224,19 @@ class Application {
     setupGraphEventHandlers() {
         // 将事件处理委托给 graphManager
         KnowledgeGraphNode.prototype.onAdded = () => {
-            this.graphManager.handleNodeAdded(this);
+            this.nodeManager.handleNodeAdded(this);
         };
 
         KnowledgeGraphNode.prototype.onRemoved = () => {
-            this.graphManager.handleNodeRemoved(this);
+            this.nodeManager.handleNodeRemoved(this);
         };
 
         KnowledgeGraphNode.prototype.onPropertyChanged = (property, value) => {
-            this.graphManager.handlePropertyChanged(this, property, value);
+            this.nodeManager.handlePropertyChanged(this, property, value);
         };
 
         KnowledgeGraphNode.prototype.onConnectionsChange = (type, slot, connected, link_info, input_info) => {
-            this.graphManager.handleConnectionsChange(this, type, slot, connected, link_info, input_info);
+            this.nodeManager.handleConnectionsChange(this, type, slot, connected, link_info, input_info);
         };
 
         // 将API客户端附加到节点
