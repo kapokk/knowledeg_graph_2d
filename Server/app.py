@@ -61,7 +61,7 @@ def poll_neo4j_changes():
     while True:
         # 获取当前节点和关系
         current_nodes = set(node.id for node in Node.get_all_nodes())
-        current_relationships = set(link.id for link in Link.search(limit=1000))
+        current_relationships = set(link.id for link in Link.get_all_relationships())
 
         # 检查新增节点
         new_nodes = current_nodes - last_nodes
@@ -114,7 +114,7 @@ def handle_nodes():
         node = Node.from_node("Node", properties)
         return jsonify({
             'code': 201,
-            'data': node
+            'data': node.to_dict()
         })
 
 @app.route('/api/nodes/<int:node_id>', methods=['GET', 'PUT', 'DELETE'])
@@ -150,7 +150,7 @@ def handle_relationships():
         relationships = [link.to_dict() for link in Link.search(limit=1000)]
         return jsonify({
             'code': 200,
-            'data': relationships
+            'data': relationships.to_dict()
         })
     elif request.method == 'POST':
         data = request.json
