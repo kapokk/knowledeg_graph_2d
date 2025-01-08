@@ -150,7 +150,7 @@ def handle_relationships():
         relationships = [link.to_dict() for link in Link.get_all_relationships()]
         return jsonify({
             'code': 200,
-            'data': relationships.to_dict()
+            'data': relationships
         })
     elif request.method == 'POST':
         data = request.json

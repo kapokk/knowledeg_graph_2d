@@ -85,6 +85,16 @@ class Link:
         """
         results = GRAPH.search_relationships(rel_type, limit)
         return [Link.from_id(result['rel_id']) for result in results]
+    
+    @staticmethod
+    def get_all_relationships():
+        """获取数据库中的所有节点
+        
+        Returns:
+            list[Node]: 所有节点对象列表
+        """
+        relationships_data = GRAPH.get_all_relationships()
+        return [Link.from_id(relationship['rel_id']) for relationship in relationships_data]
 
 pass
 

@@ -1,9 +1,10 @@
 export default class NodeManager {
-    constructor(apiClient, wsClient, graph) {
+    constructor(app,apiClient, wsClient, graph) {
         this.apiClient = apiClient;
         this.wsClient = wsClient;
         this.graph = graph;
         this.nodeMap = new Map();
+        this.app = app;
     }
 
     async loadInitialData() {
@@ -48,8 +49,8 @@ export default class NodeManager {
                 if (dx < minDistance && dy < minDistance) {
                     // 发生碰撞，生成新位置
                     pos = [
-                        Math.random() * this.graph.canvas.canvas.width,
-                        Math.random() * this.graph.canvas.canvas.height
+                        Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientWidth,
+                        Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientHeight
                     ];
                     collision = true;
                     attempts++;

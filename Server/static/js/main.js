@@ -116,14 +116,18 @@ class Application {
         
         // 初始化图管理器
         this.graphManager = new GraphManager(this.apiClient, this.wsClient);
+        // 初始化图实例
+        this.graphManager.initialize();
         
         // 初始化图和画布
-        this.graph = null;
+        this.graph = this.graphManager.graph;
         this.canvas = null;
         this.nodeMap = new Map();
 
         // 初始化节点管理器
-        this.nodeManager = new NodeManager(this.apiClient, this.wsClient, this.graph);
+        this.nodeManager = new NodeManager(this, this.apiClient, this.wsClient, this.graph);
+        
+        this.initialize();
     }
 
     async initialize() {
@@ -138,11 +142,11 @@ class Application {
             // 初始化 WebSocket 连接
             this.wsClient.connect();
             
-            // 初始化图实例
-            await this.graphManager.initialize();
+            
             
             // 加载初始数据
             await this.nodeManager.loadInitialData();
+            
             
             
 
@@ -351,5 +355,5 @@ class Application {
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
     const app = new Application();
-    app.initialize();
+    //app.initialize();
 });
