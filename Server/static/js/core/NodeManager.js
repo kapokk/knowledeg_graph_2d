@@ -112,7 +112,8 @@ export default class NodeManager {
             // 创建新连接
             this.apiClient.createRelationship(origin_id, target_id, link_type || 'CONNECTS_TO', {
                 origin_slot,
-                target_slot
+                target_slot,
+                label: link_type || 'CONNECTS_TO'  // 添加标签
             })
                 .then(relationship => {
                     // 将关系ID存储在link_info中

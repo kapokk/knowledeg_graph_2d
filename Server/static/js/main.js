@@ -216,7 +216,13 @@ class Application {
             
             if (startNode && endNode) {
                 // 创建图形连接
-                startNode.connect(startNode.inputs.length - 1, endNode, endNode.inputs.length - 1, rel.id);
+                const link = startNode.connect(startNode.inputs.length - 1, endNode, endNode.inputs.length - 1, rel.id);
+                // 添加连接标签
+                if (rel.type) {
+                    link._label = rel.type;
+                    link._label_color = "#666";
+                    link._label_bgcolor = "#eee";
+                }
                 startNode.addOutput("", "");
                         
                 // 为目标节点添加新的输入端口
@@ -291,7 +297,8 @@ class Application {
                                 origin_slot: link_info.origin_slot,
                                 target_id: endNode.id,
                                 target_slot: link_info.target_slot,
-                                type: link_info.type || ""
+                                type: link_info.type || "",
+                                label: link_info.type || "CONNECTS_TO"  // 添加标签
                             },
                             input_info
                         );
