@@ -117,6 +117,26 @@ export default class NodeManager {
                 .then(relationship => {
                     // 将关系ID存储在link_info中
                     link_info.relationshipId = relationship.id;
+
+                    // 获取源节点和目标节点
+                    const sourceNode = this.nodeMap.get(origin_id);
+                    const targetNode = this.nodeMap.get(target_id);
+
+                    if (sourceNode && targetNode) {
+                        // 为源节点添加新的输出端口
+                        sourceNode.addOutput("", "");
+                        
+                        // 为目标节点添加新的输入端口
+                        targetNode.addInput("", "");
+                        
+                        // 调整节点大小以适应新端口
+                        sourceNode.setSize([sourceNode.size[0], sourceNode.size[1] + 20]);
+                        targetNode.setSize([targetNode.size[0], targetNode.size[1] + 20]);
+                        
+                        // 刷新节点显示
+                        sourceNode.setDirtyCanvas(true, true);
+                        targetNode.setDirtyCanvas(true, true);
+                    }
                 })
                 .catch(console.error);
         } else if (!isConnected && type === LiteGraph.OUTPUT) {
