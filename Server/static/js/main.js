@@ -211,12 +211,12 @@ class Application {
         // 加载关系数据并创建连接
         const relationships = await this.apiClient.getRelationships();
         for (const rel of relationships) {
-            const startNode = this.nodeManager.nodeMap.get(rel.startNodeId);
-            const endNode = this.nodeManager.nodeMap.get(rel.endNodeId);
+            const startNode = this.nodeManager.nodeMap.get(rel.start_node.id);
+            const endNode = this.nodeManager.nodeMap.get(rel.end_node.id);
             
             if (startNode && endNode) {
                 // 创建图形连接
-                startNode.connect(endNode.id, rel.type, rel.properties);
+                startNode.connect(0, endNode, 0,rel.id);
             }
         }
     }
@@ -288,7 +288,7 @@ class Application {
                 // 处理连接删除
                 else if (!isConnected && type === LiteGraph.OUTPUT) {
                     const startNode = node;
-                    const endNode = link_info.target.node;
+                    const endNode = application.nodeManager.nodeMap.get(link_info.target_id)
                     if (endNode instanceof KnowledgeGraphNode) {
                         application.nodeManager.handleConnectionsChange(
                             startNode,
@@ -301,7 +301,7 @@ class Application {
                                 target_id: endNode.id,
                                 target_slot: link_info.target_slot,
                                 type: link_info.type || "",
-                                relationshipId: link_info.relationshipId
+                                relationshipId: link_info.id
                             },
                             input_info
                         );
