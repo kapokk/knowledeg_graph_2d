@@ -216,7 +216,19 @@ class Application {
             
             if (startNode && endNode) {
                 // 创建图形连接
-                startNode.connect(idx, endNode, endNode.inputs.length,rel.id);
+                startNode.connect(startNode.inputs.length - 1, endNode, endNode.inputs.length - 1, rel.id);
+                startNode.addOutput("", "");
+                        
+                // 为目标节点添加新的输入端口
+                endNode.addInput("", "");
+                
+                // 调整节点大小以适应新端口
+                startNode.setSize([startNode.size[0], startNode.size[1] + 20]);
+                endNode.setSize([endNode.size[0], endNode.size[1] + 20]);
+                
+                // 刷新节点显示
+                startNode.setDirtyCanvas(true, true);
+                endNode.setDirtyCanvas(true, true);
             }
         }
     }
