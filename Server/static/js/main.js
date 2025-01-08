@@ -223,6 +223,12 @@ class Application {
                     link._label_color = "#666";
                     link._label_bgcolor = "#eee";
                 }
+                // 添加连接标签
+                if (rel.type) {
+                    link._label = rel.type;
+                    link._label_color = "#666";
+                    link._label_bgcolor = "#eee";
+                }
                 startNode.addOutput("", "");
                         
                 // 为目标节点添加新的输入端口
