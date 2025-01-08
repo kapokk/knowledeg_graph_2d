@@ -210,13 +210,13 @@ class Application {
         
         // 加载关系数据并创建连接
         const relationships = await this.apiClient.getRelationships();
-        for (const rel of relationships) {
+        for (const [idx,rel] of relationships.entries()) {
             const startNode = this.nodeManager.nodeMap.get(rel.start_node.id);
             const endNode = this.nodeManager.nodeMap.get(rel.end_node.id);
             
             if (startNode && endNode) {
                 // 创建图形连接
-                startNode.connect(0, endNode, 0,rel.id);
+                startNode.connect(idx, endNode, endNode.inputs.length,rel.id);
             }
         }
     }
