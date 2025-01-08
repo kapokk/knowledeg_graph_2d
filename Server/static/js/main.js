@@ -117,13 +117,13 @@ class Application {
         // 初始化图管理器
         this.graphManager = new GraphManager(this.apiClient, this.wsClient);
         
-        // 初始化节点管理器
-        this.nodeManager = new NodeManager(this.apiClient, this.wsClient);
-
         // 初始化图和画布
         this.graph = null;
         this.canvas = null;
         this.nodeMap = new Map();
+
+        // 初始化节点管理器
+        this.nodeManager = new NodeManager(this.apiClient, this.wsClient, this.graph);
     }
 
     async initialize() {
@@ -168,8 +168,7 @@ class Application {
         this.graph = new LGraph();
         this.canvas = new LGraphCanvas("#graph-container", this.graph);
 
-        // Set graph reference in node manager
-        this.nodeManager.setGraph(this.graph);
+        // Graph reference already set during initialization
 
         // Load initial data from Neo4j
         await this.loadGraphData();

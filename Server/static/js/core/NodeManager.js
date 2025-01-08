@@ -1,13 +1,9 @@
 export default class NodeManager {
-    constructor(apiClient, wsClient) {
+    constructor(apiClient, wsClient, graph) {
         this.apiClient = apiClient;
         this.wsClient = wsClient;
-        this.nodeMap = new Map();
-        this.graph = null;
-    }
-
-    setGraph(graph) {
         this.graph = graph;
+        this.nodeMap = new Map();
     }
 
     async loadInitialData() {
