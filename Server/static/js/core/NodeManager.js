@@ -28,8 +28,41 @@ export default class NodeManager {
     createKnowledgeGraphNode(nodeData) {
         const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData);
         node.title = nodeData.labels.join(', ');
-        node.pos = [Math.random() * 500, Math.random() * 500];
         node.id = nodeData.id;
+        
+        // 计算不重叠的位置
+        const padding = 50; // 节点之间的最小间距
+        let pos = [Math.random() * 500, Math.random() * 500];
+        let collision = true;
+        let attempts = 0;
+        
+        // 最多尝试100次找到不重叠的位置
+        while (collision && attempts < 100) {
+            collision = false;
+            
+            // 检查与所有现有节点的碰撞
+            for (const existingNode of this.nodeMap.values()) {
+                const dx = Math.abs(pos[0] - existingNode.pos[0]);
+                const dy = Math.abs(pos[1] - existingNode.pos[1]);
+                const minDistance = padding + Math.max(
+                    node.size[0]/2 + existingNode.size[0]/2,
+                    node.size[1]/2 + existingNode.size[1]/2
+                );
+                
+                if (dx < minDistance && dy < minDistance) {
+                    // 发生碰撞，生成新位置
+                    pos = [
+                        Math.random() * this.graph.canvas.canvas.width,
+                        Math.random() * this.graph.canvas.canvas.height
+                    ];
+                    collision = true;
+                    attempts++;
+                    break;
+                }
+            }
+        }
+        
+        node.pos = pos;
         return node;
     }
 
