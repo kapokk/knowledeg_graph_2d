@@ -165,6 +165,43 @@ def handle_relationships():
             'data': relationship
         })
 
+@app.route('/api/ask', methods=['POST'])
+def handle_ask():
+    data = request.json
+    node_ids = data.get('nodeIds', [])
+    question = data.get('question', '')
+
+    if not node_ids or not question:
+        return jsonify({
+            'code': 400,
+            'message': 'Both nodeIds and question are required'
+        }), 400
+
+    try:
+        # Get node information
+        nodes = []
+        for node_id in node_ids:
+            node = Node.from_id(node_id)
+            if node:
+                nodes.append(node.to_dict())
+
+        # Here you would call your AI/LLM service to get the answer
+        # For now we'll just return a placeholder response
+        answer = f"Answer to question '{question}' about nodes {node_ids}"
+
+        return jsonify({
+            'code': 200,
+            'data': {
+                'answer': answer,
+                'nodes': nodes
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': str(e)
+        }), 500
+
 @app.route('/api/relationships/<int:relationship_id>', methods=['GET', 'PUT', 'DELETE'])
 def handle_relationship(relationship_id):
     if request.method == 'GET':

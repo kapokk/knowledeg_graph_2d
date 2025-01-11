@@ -89,18 +89,37 @@ export default class ApiClient {
     }
     
     async askQuestion(nodeIds, question) {
-        const response = await fetch(`${this.baseUrl}/ask`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ nodeIds, question }),
-        });
-        const result = await response.json();
-        if (result.code === 200) {
-            return result.data;
+        try {
+            const response = await fetch(`${this.baseUrl}/ask`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ 
+                    nodeIds: Array.isArray(nodeIds) ? nodeIds : [nodeIds],
+                    question 
+                }),
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            if (result.code === 200) {
+                return {
+                    answer: result.data.answer,
+                    nodes: result.data.nodes || []
+                };
+            }
+            
+            throw new Error(result.message || "Failed to get answer");
+            
+        } catch (error) {
+            console.error('Error asking question:', error);
+            throw error;
         }
-        throw new Error("Failed to get answer");
     }
         
 }

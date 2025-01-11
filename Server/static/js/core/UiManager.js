@@ -42,7 +42,11 @@ export class UiManager {
             const submitButton = panel.addButton("Ask",  () =>{
                 const question = questionInput.value.trim();
                 if (question) {
-                    uiManager.handleAskQuestion(question, answerOutput);
+                    answerOutput.value = "Thinking...";
+                    uiManager.handleAskQuestion(question, answerOutput)
+                        .catch(error => {
+                            answerOutput.value = `Error: ${error.message}`;
+                        });
                 }
             });
 
