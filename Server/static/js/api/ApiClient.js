@@ -78,8 +78,16 @@ export default class ApiClient {
     }
 
     async deleteRelationship(relationshipId) {
+        const response = await fetch(`${this.baseUrl}/relationships/${relationshipId}`, {
+            method: 'DELETE'
+        });
+        const result = await response.json();
+        if (result.code === 204) {
+            return result.data;
+        }
+        throw new Error('Failed to delete relationship');
     }
-
+    
     async askQuestion(nodeIds, question) {
         const response = await fetch(`${this.baseUrl}/ask`, {
             method: "POST",
@@ -94,13 +102,5 @@ export default class ApiClient {
         }
         throw new Error("Failed to get answer");
     }
-        const response = await fetch(`${this.baseUrl}/relationships/${relationshipId}`, {
-            method: 'DELETE'
-        });
-        const result = await response.json();
-        if (result.code === 204) {
-            return result.data;
-        }
-        throw new Error('Failed to delete relationship');
-    }
+        
 }
