@@ -193,11 +193,25 @@ class EAgent:
         return result
         
     def answer_question(self, nodes, question):
+        """流式回答关于节点的问题"""
+        # 构建上下文
+        node_context = "\n".join([f"Node {node['id']}: {node}" for node in nodes])
+        objective = f"根据以下节点信息回答问题：\n{node_context}\n\n问题：{question}"
+        
+        # 使用流式调用
         response = ""
-        def add_response(str):
-            nonlocal response
-            response += str
-            print(str)
+        for chunk in self.agent_executor.stream({
+            "evaluation_target": objective,
+            "agent_scratchpad": ""
+        }):
+            if 'output' in chunk:
+                response += chunk['output']
+                yield chunk['output']
+        
+        yield {
+            'answer': response,
+            'nodes': nodes
+        }
 
 
 

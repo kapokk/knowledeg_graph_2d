@@ -189,12 +189,16 @@ def handle_ask():
 
         # Use EAgent to answer the question
         e_agent = EAgent()
-        result = e_agent.answer_question(nodes, question)
         
-        return jsonify({
-            'code': 200,
-            'data': result
-        })
+        # 流式响应
+        def generate():
+            for chunk in e_agent.answer_question(nodes, question):
+                if isinstance(chunk, dict):
+                    yield f"data: {json.dumps({'code': 200, 'data': chunk})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'code': 200, 'data': {'partial': chunk}})}\n\n"
+        
+        return Response(generate(), mimetype='text/event-stream')
     except Exception as e:
         return jsonify({
             'code': 500,
