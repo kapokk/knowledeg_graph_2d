@@ -211,6 +211,73 @@ export default class GraphManager {
         };
     }
 
+    createPanel(title, options) {
+        const panel = document.createElement("div");
+        panel.className = "litegraph-panel";
+        panel.style.position = "absolute";
+        panel.style.right = "20px";
+        panel.style.bottom = "20px";
+        panel.style.width = "300px";
+        panel.style.padding = "15px";
+        panel.style.backgroundColor = "#fff";
+        panel.style.boxShadow = "0 0 10px rgba(0,0,0,0.1)";
+        panel.style.borderRadius = "5px";
+        panel.style.zIndex = "1000";
+
+        const header = document.createElement("div");
+        header.className = "panel-header";
+        header.textContent = title;
+        panel.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "panel-content";
+        panel.appendChild(content);
+
+        const footer = document.createElement("div");
+        footer.className = "panel-footer";
+        panel.appendChild(footer);
+
+        if (options.closable) {
+            const closeButton = document.createElement("button");
+            closeButton.textContent = "×";
+            closeButton.style.position = "absolute";
+            closeButton.style.right = "5px";
+            closeButton.style.top = "5px";
+            closeButton.style.border = "none";
+            closeButton.style.background = "none";
+            closeButton.style.cursor = "pointer";
+            closeButton.onclick = () => {
+                panel.close();
+                if (options.onClose) {
+                    options.onClose();
+                }
+            };
+            header.appendChild(closeButton);
+        }
+
+        panel.addHTML = function (html) {
+            content.innerHTML += html;
+        };
+
+        panel.addButton = function (text, callback) {
+            const button = document.createElement("button");
+            button.textContent = text;
+            button.onclick = callback;
+            footer.appendChild(button);
+            return button;
+        };
+
+        panel.close = function () {
+            panel.parentNode.removeChild(panel);
+        };
+
+        return panel;
+    }
+
+    getCanvasWindow() {
+        return this.canvas.canvas.parentNode;
+    }
+
     showAskPanel() {
         this.closePanels(); // 关闭其他面板
 
@@ -297,6 +364,13 @@ export default class GraphManager {
         } catch (error) {
             console.error("Error asking question:", error);
             answerOutput.value = "Error: " + error.message;
+        }
+    }
+
+    closePanels() {
+        if (this.ask_panel) {
+            this.ask_panel.close();
+            this.ask_panel = null;
         }
     }
 
