@@ -4292,7 +4292,7 @@
      * @param {number_or_string} target_slot the input slot of the target node (could be the number of the slot or the string with the name of the slot, or -1 to connect a trigger)
      * @return {Object} the link_info is created, otherwise null
      */
-    LGraphNode.prototype.connect = function(slot, target_node, target_slot,link_id=null) {
+    LGraphNode.prototype.connect = function(slot, target_node, target_slot) {
         target_slot = target_slot || 0;
 
         if (!this.graph) {
@@ -4423,16 +4423,12 @@
                 break;
             }
         }
-        
+
         var nextId
         if (LiteGraph.use_uuids)
             nextId = LiteGraph.uuidv4();
         else
             nextId = ++this.graph.last_link_id;
-
-        if (link_id != null) { 
-            nextId = link_id
-        }
         
 		//create link class
 		link_info = new LLink(
@@ -9767,22 +9763,6 @@ LGraphNode.prototype.executeAction = function(action)
                 ctx.arc(pos[0], pos[1], 5, 0, 2 * Math.PI);
                 ctx.fill();
             }
-        }
-
-        if (link && link._label) {
-            // Calculate the position to render the label
-            var labelPos = this.computeConnectionPoint(a, b, 0.5, start_dir, end_dir);
-        
-            // Set the font style
-            ctx.font = "12px Arial"; // You can customize the font style
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-        
-            // Set the fill style for the label
-            ctx.fillStyle = "#FFF"; // Default text color, can be customized
-        
-            // Draw the label at the calculated position
-            ctx.fillText(link._label, labelPos[0], labelPos[1]);
         }
     };
 
@@ -34590,4 +34570,3 @@ LiteGraph.registerNodeType("network/httprequest", HTTPRequestNode);
 
 	
 })(this);
-
