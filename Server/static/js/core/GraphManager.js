@@ -8,6 +8,7 @@ export default class GraphManager {
     }
 
     async initialize() {
+        this.setupAskMenu();
         // Initialize graph and canvas
         this.graph = new LGraph();
 
@@ -32,6 +33,7 @@ export default class GraphManager {
     }
 
     setupGraphEventHandlers() {
+        this.setupAskMenu();
 
         let application = this
 
@@ -187,6 +189,115 @@ export default class GraphManager {
         window.addEventListener('resize', () => {
             this.graphManager.handleWindowResize();
         });
+    }
+
+    setupAskMenu() {
+        const canvas = this.canvas;
+        const graph = this.graph;
+
+        // 添加右键菜单选项
+        canvas.getNodeMenuOptions = (node) => {
+            const options = [];
+
+            // 添加Ask选项（仅在选中节点时显示）
+            if (canvas.selected_nodes && canvas.selected_nodes.length > 0) {
+                options.push({
+                    content: "Ask",
+                    callback: () => this.showAskPanel()
+                });
+            }
+
+            return options;
+        };
+    }
+
+    showAskPanel() {
+        this.closePanels(); // 关闭其他面板
+
+        const canvasWindow = this.getCanvasWindow();
+        const currentObj = this;
+
+        // 创建面板
+        const panel = this.createPanel("Ask Question", {
+            closable: true,
+            window: canvasWindow,
+            onOpen: function () {
+                // 面板打开时的回调
+            },
+            onClose: function () {
+                currentObj.ask_panel = null; // 关闭时清空引用
+            }
+        });
+
+        currentObj.ask_panel = panel; // 保存面板引用
+        panel.id = "ask-panel";
+        panel.classList.add("ask-panel");
+
+        // 更新面板内容
+        function updatePanelContent() {
+            panel.content.innerHTML = ""; // 清空内容
+
+            // 添加问题输入框
+            panel.addHTML("<h3>Ask a Question</h3>");
+            const questionInput = document.createElement("textarea");
+            questionInput.placeholder = "Enter your question here...";
+            questionInput.style.width = "100%";
+            questionInput.style.height = "100px";
+            questionInput.style.marginBottom = "10px";
+            panel.content.appendChild(questionInput);
+
+            // 添加提交按钮
+            const submitButton = panel.addButton("Ask", function () {
+                const question = questionInput.value.trim();
+                if (question) {
+                    currentObj.handleAskQuestion(question, answerOutput);
+                }
+            });
+
+            // 添加答案输出框
+            panel.addHTML("<h3>Answer</h3>");
+            const answerOutput = document.createElement("textarea");
+            answerOutput.placeholder = "Answer will appear here...";
+            answerOutput.style.width = "100%";
+            answerOutput.style.height = "150px";
+            answerOutput.readOnly = true;
+            panel.content.appendChild(answerOutput);
+
+            // 添加清除按钮
+            const clearButton = panel.addButton("Clear", function () {
+                questionInput.value = "";
+                answerOutput.value = "";
+            });
+            clearButton.style.marginLeft = "10px";
+        }
+
+        // 初始化面板内容
+        updatePanelContent();
+
+        // 将面板添加到画布容器
+        this.canvas.parentNode.appendChild(panel);
+    }
+
+    async handleAskQuestion(question, answerOutput) {
+        try {
+            // 获取选中的节点
+            const selectedNodes = this.canvas.selected_nodes || [];
+            const nodeIds = selectedNodes.map(node => node.id);
+
+            if (nodeIds.length === 0) {
+                answerOutput.value = "Please select at least one node.";
+                return;
+            }
+
+            // 调用API提问
+            const response = await this.apiClient.askQuestion(nodeIds, question);
+
+            // 显示结果
+            answerOutput.value = response.answer || "No answer available";
+        } catch (error) {
+            console.error("Error asking question:", error);
+            answerOutput.value = "Error: " + error.message;
+        }
     }
 
     handleWindowResize() {

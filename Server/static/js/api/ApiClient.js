@@ -78,6 +78,22 @@ export default class ApiClient {
     }
 
     async deleteRelationship(relationshipId) {
+    }
+
+    async askQuestion(nodeIds, question) {
+        const response = await fetch(`${this.baseUrl}/ask`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ nodeIds, question }),
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            return result.data;
+        }
+        throw new Error("Failed to get answer");
+    }
         const response = await fetch(`${this.baseUrl}/relationships/${relationshipId}`, {
             method: 'DELETE'
         });
