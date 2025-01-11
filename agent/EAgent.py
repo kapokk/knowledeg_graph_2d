@@ -191,6 +191,23 @@ class EAgent:
             "agent_scratchpad": ""
         })
         return result
+        
+    def answer_question(self, nodes, question):
+        """回答关于节点的问题"""
+        # 构建上下文
+        node_context = "\n".join([f"Node {node['id']}: {node}" for node in nodes])
+        objective = f"根据以下节点信息回答问题：\n{node_context}\n\n问题：{question}"
+        
+        # 调用agent
+        result = self.agent_executor.invoke({
+            "evaluation_target": objective,
+            "agent_scratchpad": ""
+        })
+        
+        return {
+            'answer': result['output'],
+            'nodes': nodes
+        }
 
 def run_multi_agent_system(iterations=100):
     """运行多代理系统

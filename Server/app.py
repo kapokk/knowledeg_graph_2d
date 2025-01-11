@@ -185,16 +185,13 @@ def handle_ask():
             if node:
                 nodes.append(node.to_dict())
 
-        # Here you would call your AI/LLM service to get the answer
-        # For now we'll just return a placeholder response
-        answer = f"Answer to question '{question}' about nodes {node_ids}"
-
+        # Use EAgent to answer the question
+        e_agent = EAgent()
+        result = e_agent.answer_question(nodes, question)
+        
         return jsonify({
             'code': 200,
-            'data': {
-                'answer': answer,
-                'nodes': nodes
-            }
+            'data': result
         })
     except Exception as e:
         return jsonify({
