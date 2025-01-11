@@ -193,21 +193,56 @@ class EAgent:
         return result
         
     def answer_question(self, nodes, question):
-        """回答关于节点的问题"""
-        # 构建上下文
-        node_context = "\n".join([f"Node {node['id']}: {node}" for node in nodes])
-        objective = f"根据以下节点信息回答问题：\n{node_context}\n\n问题：{question}"
-        
-        # 调用agent
-        result = self.agent_executor.invoke({
-            "evaluation_target": objective,
-            "agent_scratchpad": ""
-        })
-        
-        return {
-            'answer': result['output'],
-            'nodes': nodes
-        }
+        response = ""
+        def add_response(str):
+            nonlocal response
+            response += str
+            print(str)
+
+
+
+        iterations = 2
+        from agent.SAgent import agent_executor as s_agent
+        e_agent = EAgent()
+
+        # 只在第一次获取用户输入
+        initial_objective = str(nodes) + question
+        previous_objectives = []  # 存储所有历史目标和评估
+        current_objective = initial_objective
+
+        for i in range(iterations):
+            add_response(f"\n=== 第 {i + 1} 次迭代 ===")
+            add_response(f"当前目标：{current_objective}")
+
+            # 1. SAgent 执行操作，传入所有历史目标信息
+            add_response("\n[SAgent 执行中...]")
+            s_result = s_agent.invoke({
+                "objective": current_objective,
+                "previous_objectives": initial_objective,  # 传入所有历史目标
+                "agent_scratchpad": ""
+            })
+            add_response(f"SAgent 执行结果：{s_result}")
+
+            # 最后一轮不评估
+            if i == (iterations - 1):
+                break
+            # 2. EAgent 评估结果
+            add_response("\n[EAgent 评估中...]")
+            e_result = e_agent.evaluate(f"评估 SAgent 执行的操作：{current_objective}\n执行结果：{s_result}")
+            add_response(f"EAgent 评估结果：{e_result}")
+
+            # 3. 记录当前迭代的目标和评估
+            previous_objectives.append({
+                "iteration": i + 1,
+                "objective": current_objective,
+                # "result": s_result,
+                # "evaluation": e_result
+            })
+
+            # 4. 设置下一次迭代的目标为评估结果
+            current_objective = f"基于评估结果进行改进：{e_result['output']}"
+
+        return response
 
 def run_multi_agent_system(iterations=100):
     """运行多代理系统
