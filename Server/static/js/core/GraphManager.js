@@ -1,3 +1,4 @@
+import { UiManager } from './UiManager.js';
 export default class GraphManager {
     constructor(apiClient, wsClient,nodeManager) {
         this.apiClient = apiClient;
@@ -5,10 +6,14 @@ export default class GraphManager {
         this.graph = null;
         this.canvas = null;
         this.nodeManager = nodeManager
+        
+        this.initialize();
+
+        this.uiManager = new UiManager(this.canvas,this.apiClient);
     }
 
     async initialize() {
-        this.setupAskMenu();
+        
         // Initialize graph and canvas
         this.graph = new LGraph();
 
@@ -30,10 +35,12 @@ export default class GraphManager {
         
         await this.loadGraphData();
         this.setupGraphEventHandlers();
+
+        
     }
 
     setupGraphEventHandlers() {
-        this.setupAskMenu();
+        
 
         let application = this
 
@@ -111,6 +118,23 @@ export default class GraphManager {
         // 将API客户端附加到节点
         KnowledgeGraphNode.prototype.onConfigure = () => {
             this.apiClient = this.graphManager.apiClient;
+        };
+
+        KnowledgeGraphNode.prototype.getMenuOptions = (canvas) => {
+            // 添加右键菜单选项
+        
+            const options = [];
+
+            // 添加Ask选项（仅在选中节点时显示）
+            if (canvas.selected_nodes && Object.entries(canvas.selected_nodes).length > 0) {
+                options.push({
+                    content: "Ask",
+                    callback: () => this.uiManager.showAskPanel()
+                });
+            }
+
+            return options;
+        
         };
     }
 
@@ -191,188 +215,11 @@ export default class GraphManager {
         });
     }
 
-    setupAskMenu() {
-        const canvas = this.canvas;
-        const graph = this.graph;
+    
 
-        // 添加右键菜单选项
-        canvas.getNodeMenuOptions = (node) => {
-            const options = [];
+    
 
-            // 添加Ask选项（仅在选中节点时显示）
-            if (canvas.selected_nodes && canvas.selected_nodes.length > 0) {
-                options.push({
-                    content: "Ask",
-                    callback: () => this.showAskPanel()
-                });
-            }
-
-            return options;
-        };
-    }
-
-    createPanel(title, options) {
-        const panel = document.createElement("div");
-        panel.className = "litegraph-panel";
-        panel.style.position = "absolute";
-        panel.style.right = "20px";
-        panel.style.bottom = "20px";
-        panel.style.width = "300px";
-        panel.style.padding = "15px";
-        panel.style.backgroundColor = "#fff";
-        panel.style.boxShadow = "0 0 10px rgba(0,0,0,0.1)";
-        panel.style.borderRadius = "5px";
-        panel.style.zIndex = "1000";
-
-        const header = document.createElement("div");
-        header.className = "panel-header";
-        header.textContent = title;
-        panel.appendChild(header);
-
-        const content = document.createElement("div");
-        content.className = "panel-content";
-        panel.appendChild(content);
-
-        const footer = document.createElement("div");
-        footer.className = "panel-footer";
-        panel.appendChild(footer);
-
-        if (options.closable) {
-            const closeButton = document.createElement("button");
-            closeButton.textContent = "×";
-            closeButton.style.position = "absolute";
-            closeButton.style.right = "5px";
-            closeButton.style.top = "5px";
-            closeButton.style.border = "none";
-            closeButton.style.background = "none";
-            closeButton.style.cursor = "pointer";
-            closeButton.onclick = () => {
-                panel.close();
-                if (options.onClose) {
-                    options.onClose();
-                }
-            };
-            header.appendChild(closeButton);
-        }
-
-        panel.addHTML = function (html) {
-            content.innerHTML += html;
-        };
-
-        panel.addButton = function (text, callback) {
-            const button = document.createElement("button");
-            button.textContent = text;
-            button.onclick = callback;
-            footer.appendChild(button);
-            return button;
-        };
-
-        panel.close = function () {
-            panel.parentNode.removeChild(panel);
-        };
-
-        return panel;
-    }
-
-    getCanvasWindow() {
-        return this.canvas.canvas.parentNode;
-    }
-
-    showAskPanel() {
-        this.closePanels(); // 关闭其他面板
-
-        const canvasWindow = this.getCanvasWindow();
-        const currentObj = this;
-
-        // 创建面板
-        const panel = this.createPanel("Ask Question", {
-            closable: true,
-            window: canvasWindow,
-            onOpen: function () {
-                // 面板打开时的回调
-            },
-            onClose: function () {
-                currentObj.ask_panel = null; // 关闭时清空引用
-            }
-        });
-
-        currentObj.ask_panel = panel; // 保存面板引用
-        panel.id = "ask-panel";
-        panel.classList.add("ask-panel");
-
-        // 更新面板内容
-        function updatePanelContent() {
-            panel.content.innerHTML = ""; // 清空内容
-
-            // 添加问题输入框
-            panel.addHTML("<h3>Ask a Question</h3>");
-            const questionInput = document.createElement("textarea");
-            questionInput.placeholder = "Enter your question here...";
-            questionInput.style.width = "100%";
-            questionInput.style.height = "100px";
-            questionInput.style.marginBottom = "10px";
-            panel.content.appendChild(questionInput);
-
-            // 添加提交按钮
-            const submitButton = panel.addButton("Ask", function () {
-                const question = questionInput.value.trim();
-                if (question) {
-                    currentObj.handleAskQuestion(question, answerOutput);
-                }
-            });
-
-            // 添加答案输出框
-            panel.addHTML("<h3>Answer</h3>");
-            const answerOutput = document.createElement("textarea");
-            answerOutput.placeholder = "Answer will appear here...";
-            answerOutput.style.width = "100%";
-            answerOutput.style.height = "150px";
-            answerOutput.readOnly = true;
-            panel.content.appendChild(answerOutput);
-
-            // 添加清除按钮
-            const clearButton = panel.addButton("Clear", function () {
-                questionInput.value = "";
-                answerOutput.value = "";
-            });
-            clearButton.style.marginLeft = "10px";
-        }
-
-        // 初始化面板内容
-        updatePanelContent();
-
-        // 将面板添加到画布容器
-        this.canvas.parentNode.appendChild(panel);
-    }
-
-    async handleAskQuestion(question, answerOutput) {
-        try {
-            // 获取选中的节点
-            const selectedNodes = this.canvas.selected_nodes || [];
-            const nodeIds = selectedNodes.map(node => node.id);
-
-            if (nodeIds.length === 0) {
-                answerOutput.value = "Please select at least one node.";
-                return;
-            }
-
-            // 调用API提问
-            const response = await this.apiClient.askQuestion(nodeIds, question);
-
-            // 显示结果
-            answerOutput.value = response.answer || "No answer available";
-        } catch (error) {
-            console.error("Error asking question:", error);
-            answerOutput.value = "Error: " + error.message;
-        }
-    }
-
-    closePanels() {
-        if (this.ask_panel) {
-            this.ask_panel.close();
-            this.ask_panel = null;
-        }
-    }
+    
 
     handleWindowResize() {
         if (this.canvas) {

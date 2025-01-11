@@ -22,8 +22,7 @@ class Application {
         
         // 初始化图管理器
         this.graphManager = new GraphManager(this.apiClient, this.wsClient,this.nodeManager);
-        // 初始化图实例
-        this.graphManager.initialize();
+        
         
         
 
@@ -55,5 +54,6 @@ class Application {
 // 启动应用
 document.addEventListener('DOMContentLoaded', () => {
     const app = new Application();
+    window.app = app;
     //app.initialize();
 });

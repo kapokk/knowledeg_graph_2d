@@ -6,7 +6,7 @@
     <title>Knowledge Graph</title>
     <link rel="stylesheet" href="/css/litegraph.css">
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="/js/litegraph_my.js"></script>
+    <script src="/js/litegraph/litegraph_my.js"></script>
     <script type="module" src="/js/main.js"></script>
     <script>
         // Add this to help debug Socket.IO connection issues
@@ -14,8 +14,10 @@
     </script>
 </head>
 <body style='width:100%; height:100%'>
-    <div class="graph-wrapper">
-        <canvas id="graph-container"></canvas>
+    <div class="litegraph litegraph-editor">
+        <div class="graph-wrapper">
+            <canvas id="graph-container"></canvas>
+        </div>
     </div>
 </body>
 </html>

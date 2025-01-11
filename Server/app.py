@@ -181,7 +181,7 @@ def handle_ask():
         # Get node information
         nodes = []
         for node_id in node_ids:
-            node = Node.from_id(node_id)
+            node = Node.from_id(int(node_id))
             if node:
                 nodes.append(node.to_dict())
 
