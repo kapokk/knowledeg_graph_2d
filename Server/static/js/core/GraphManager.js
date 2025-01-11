@@ -55,7 +55,7 @@ export default class GraphManager {
         };
 
         // 连接变化处理
-        KnowledgeGraphNode.prototype.onConnectionsChange = function(type, slot, isConnected, link_info, input_info) {
+        KnowledgeGraphNode.prototype.onConnectionsChange = async function(type, slot, isConnected, link_info, input_info) {
             const node = this;
             if (node instanceof KnowledgeGraphNode) {
                 // 处理连接创建
@@ -63,7 +63,7 @@ export default class GraphManager {
                     const startNode = node;
                     const endNode = application.nodeManager.nodeMap.get(link_info.target_id)
                     if (endNode instanceof KnowledgeGraphNode) {
-                        application.nodeManager.handleConnectionsChange(
+                        res_link = await application.nodeManager.handleConnectionsChange(
                             startNode,
                             type,
                             slot,
@@ -78,6 +78,7 @@ export default class GraphManager {
                             },
                             input_info
                         );
+                        link_info.id = res_link.id
                     }
                 }
                 // 处理连接删除
@@ -96,7 +97,7 @@ export default class GraphManager {
                                 target_id: endNode.id,
                                 target_slot: link_info.target_slot,
                                 type: link_info.type || "",
-                                relationshipId: link_info.id
+                                id: link_info.id
                             },
                             input_info
                         );
@@ -139,7 +140,7 @@ export default class GraphManager {
             
             if (startNode && endNode) {
                 // 创建图形连接
-                const link = startNode.connect(startNode.inputs.length - 1, endNode, endNode.inputs.length - 1, rel.id);
+                const link = startNode.connect(startNode.outputs.length - 1, endNode, endNode.inputs.length - 1, rel.id);
                 // 添加连接标签
                 if (rel.type) {
                     link._label = rel.type;
