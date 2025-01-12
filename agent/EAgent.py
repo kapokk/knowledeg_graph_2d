@@ -226,20 +226,41 @@ class EAgent:
 
             # 1. SAgent 执行操作，传入所有历史目标信息
             add_response("\n[SAgent 执行中...]")
-            s_result = s_agent.invoke({
+
+            s_result = ""
+            add_response(f"SAgent 评估结果：")
+            for chunk in s_agent.stream({
                 "objective": current_objective,
                 "previous_objectives": initial_objective,  # 传入所有历史目标
                 "agent_scratchpad": ""
-            })
-            add_response(f"SAgent 执行结果：{s_result}")
+            }):
+                if("output" in chunk):
+                    s_result = chunk["output"]
+                    yield s_result
+                elif ("actions" in chunk):
+                    add_response(chunk["actions"])
+                    yield chunk["actions"]
 
             # 最后一轮不评估
             if i == (iterations - 1):
                 break
             # 2. EAgent 评估结果
             add_response("\n[EAgent 评估中...]")
-            e_result = e_agent.evaluate(f"评估 SAgent 执行的操作：{current_objective}\n执行结果：{s_result}")
-            add_response(f"EAgent 评估结果：{e_result}")
+
+            e_result = ""
+            add_response(f"EAgent 评估结果：")
+            for chunk in self.agent_executor.stream({
+                "evaluation_target": f"评估 SAgent 执行的操作：{current_objective}\n执行结果：{s_result}",
+                "agent_scratchpad": ""
+            }):
+                if ("output" in chunk):
+                    s_result = chunk["output"]
+                    e_result = chunk["output"]
+                    yield s_result
+                elif ("actions" in chunk):
+                    add_response(chunk["actions"])
+                    yield chunk["actions"]
+
 
             # 3. 记录当前迭代的目标和评估
             previous_objectives.append({
@@ -250,7 +271,7 @@ class EAgent:
             })
 
             # 4. 设置下一次迭代的目标为评估结果
-            current_objective = f"基于评估结果进行改进：{e_result['output']}"
+            current_objective = f"基于评估结果进行改进：{e_result}"
 
             yield response
 
