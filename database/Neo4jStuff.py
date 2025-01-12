@@ -70,20 +70,33 @@ class Neo4jGraph:
         return result.single()[0] if result.peek() else None
 
     # 更新节点并返回更新后的节点
-    def update_node_by_node_id(self, node_id, new_properties):
+    def update_node_by_node_id(self, node_id, new_properties, new_labels=None):
         with self.begin_session() as session:
-            result = session.write_transaction(self._update_node_by_node_id, node_id, new_properties)
+            result = session.write_transaction(self._update_node_by_node_id, node_id, new_properties, new_labels)
             return result
 
-    def _update_node_by_node_id(self, tx, node_id, new_properties):
-        # Regular property update
-        query = """
-        MATCH (n)
-        WHERE id(n) = $node_id
-        SET n += $new_properties
-        RETURN n
-        """
-        result = tx.run(query, node_id=node_id, new_properties=new_properties)
+    def _update_node_by_node_id(self, tx, node_id, new_properties, new_labels=None):
+        # Update both properties and labels if provided
+        if new_labels is not None:
+            # Remove all existing labels and set new ones
+            query = """
+            MATCH (n)
+            WHERE id(n) = $node_id
+            SET n += $new_properties
+            WITH n
+            CALL apoc.create.setLabels(n, $new_labels)
+            RETURN n
+            """
+            result = tx.run(query, node_id=node_id, new_properties=new_properties, new_labels=new_labels)
+        else:
+            # Just update properties
+            query = """
+            MATCH (n)
+            WHERE id(n) = $node_id
+            SET n += $new_properties
+            RETURN n
+            """
+            result = tx.run(query, node_id=node_id, new_properties=new_properties)
         return result.single()[0] if result.peek() else None
 
     def find_path(self, start_node_name, end_node_name):
