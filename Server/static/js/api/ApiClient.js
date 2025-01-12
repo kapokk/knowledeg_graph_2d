@@ -88,38 +88,37 @@ export default class ApiClient {
         throw new Error('Failed to delete relationship');
     }
     
-    async askQuestion(nodeIds, question) {
-        try {
-            const response = await fetch(`${this.baseUrl}/ask`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ 
-                    nodeIds: Array.isArray(nodeIds) ? nodeIds : [nodeIds],
-                    question 
-                }),
-            });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+    askQuestion(nodeIds, question, onData, onComplete, onError) {
+        const eventSource = new EventSource(`${this.baseUrl}/ask?nodeIds=${nodeIds.join(',')}&question=${encodeURIComponent(question)}`);
+        
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.data.partial) {
+                    // 处理部分响应
+                    onData && onData(data.data.partial);
+                } else {
+                    // 处理最终响应
+                    onComplete && onComplete({
+                        answer: data.data.answer,
+                        nodes: data.data.nodes || []
+                    });
+                    eventSource.close();
+                }
+            } catch (error) {
+                onError && onError(error);
+                eventSource.close();
             }
-            
-            const result = await response.json();
-            
-            if (result.code === 200) {
-                return {
-                    answer: result.data.answer,
-                    nodes: result.data.nodes || []
-                };
-            }
-            
-            throw new Error(result.message || "Failed to get answer");
-            
-        } catch (error) {
-            console.error('Error asking question:', error);
-            throw error;
-        }
+        };
+
+        eventSource.onerror = (error) => {
+            onError && onError(error);
+            eventSource.close();
+        };
+
+        return {
+            close: () => eventSource.close()
+        };
     }
         
 }
