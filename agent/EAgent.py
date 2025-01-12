@@ -1,4 +1,6 @@
 import os
+import time
+
 from langchain.agents import AgentExecutor, create_tool_calling_agent
 from langchain.tools import BaseTool, tool
 from langchain_openai import ChatOpenAI
@@ -194,28 +196,22 @@ class EAgent:
         
     def answer_question(self, nodes, question):
         """流式回答关于节点的问题"""
-        # 构建上下文
-        node_context = "\n".join([f"Node {node['id']}: {node}" for node in nodes])
-        objective = f"根据以下节点信息回答问题：\n{node_context}\n\n问题：{question}"
-        
+
+
         # 使用流式调用
         response = ""
-        for chunk in self.agent_executor.stream({
-            "evaluation_target": objective,
-            "agent_scratchpad": ""
-        }):
-            if 'output' in chunk:
-                response += chunk['output']
-                yield chunk['output']
-        
-        yield {
-            'answer': response,
-            'nodes': nodes
-        }
+
+
+        def add_response(str):
+            nonlocal response
+            response += str
+            print(str)
 
 
 
-        iterations = 2
+
+
+        iterations = 1
         from agent.SAgent import agent_executor as s_agent
         e_agent = EAgent()
 
@@ -255,6 +251,8 @@ class EAgent:
 
             # 4. 设置下一次迭代的目标为评估结果
             current_objective = f"基于评估结果进行改进：{e_result['output']}"
+
+            yield response
 
         return response
 
