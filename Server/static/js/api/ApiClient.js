@@ -89,35 +89,74 @@ export default class ApiClient {
     }
     
     askQuestion(nodeIds, question, onData, onComplete, onError) {
-        const eventSource = new EventSource(`${this.baseUrl}/ask?nodeIds=${nodeIds.join(',')}&question=${encodeURIComponent(question)}`);
+        const controller = new AbortController();
         
-        eventSource.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                if (data.data.partial) {
-                    // 处理部分响应
-                    onData && onData(data.data.partial);
-                } else {
-                    // 处理最终响应
-                    onComplete && onComplete({
-                        answer: data.data.answer,
-                        nodes: data.data.nodes || []
-                    });
-                    eventSource.close();
-                }
-            } catch (error) {
-                onError && onError(error);
-                eventSource.close();
+        fetch(`${this.baseUrl}/ask`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                nodeIds: Array.isArray(nodeIds) ? nodeIds : [nodeIds],
+                question
+            }),
+            signal: controller.signal
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
-        };
-
-        eventSource.onerror = (error) => {
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            
+            function read() {
+                return reader.read().then(({done, value}) => {
+                    if (done) {
+                        if (buffer) {
+                            try {
+                                const data = JSON.parse(buffer);
+                                onComplete && onComplete({
+                                    answer: data.data.answer,
+                                    nodes: data.data.nodes || []
+                                });
+                            } catch (error) {
+                                onError && onError(error);
+                            }
+                        }
+                        return;
+                    }
+                    
+                    buffer += decoder.decode(value, {stream: true});
+                    
+                    // 处理可能的多条消息
+                    const messages = buffer.split('\n\n');
+                    buffer = messages.pop(); // 最后一条可能不完整
+                    
+                    messages.forEach(message => {
+                        try {
+                            const data = JSON.parse(message.replace('data: ', ''));
+                            if (data.data.partial) {
+                                onData && onData(data.data.partial);
+                            }
+                        } catch (error) {
+                            onError && onError(error);
+                        }
+                    });
+                    
+                    return read();
+                });
+            }
+            
+            return read();
+        })
+        .catch(error => {
             onError && onError(error);
-            eventSource.close();
-        };
+        });
 
         return {
-            close: () => eventSource.close()
+            close: () => controller.abort()
         };
     }
         
