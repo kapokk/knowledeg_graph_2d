@@ -136,21 +136,34 @@ export default class NodeManager {
             console.error('Node ID not found');
             return;
         }
-        if (property == "Labels") { 
-            
-        }
 
-        const properties = { ...node.properties, [property]: value };
-        this.apiClient.updateNode(node.id, properties)
-            .then(updatedNode => {
-                node.properties = updatedNode.properties;
-                node.refreshControls()
-            })
-            .catch(error => {
-                console.error('Failed to update node:', error);
-                node.properties[property] = node.properties[property];
-                node.refreshControls()
-            });
+        if (property === "Labels") {
+            // Handle label update
+            const labels = value.split(",").map(label => label.trim());
+            this.apiClient.updateNode(node.id, {}, labels)
+                .then(updatedNode => {
+                    node.labels = labels;
+                    node.title = labels.join(', ');
+                    node.refreshControls();
+                })
+                .catch(error => {
+                    console.error('Failed to update labels:', error);
+                    node.refreshControls();
+                });
+        } else {
+            // Handle property update
+            const properties = { ...node.properties, [property]: value };
+            this.apiClient.updateNode(node.id, properties)
+                .then(updatedNode => {
+                    node.properties = updatedNode.properties;
+                    node.refreshControls();
+                })
+                .catch(error => {
+                    console.error('Failed to update node:', error);
+                    node.properties[property] = node.properties[property]; // Revert change
+                    node.refreshControls();
+                });
+        }
     }
 
     async handleConnectionsChange(node, type, slot, isConnected, link_info, input_info) {
