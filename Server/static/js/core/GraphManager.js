@@ -40,12 +40,21 @@ export default class GraphManager {
     }
 
     setupGraphEventHandlers() {
-        
-
         let application = this
 
         // 使用 LiteGraph 的事件系统
         this.graph.onNodeAdded = (node) => {
+            // 为每个属性控件添加变化监听
+            if (node instanceof KnowledgeGraphNode) {
+                node.widgets.forEach(widget => {
+                    if (widget.type === "text" && widget.name !== "Labels") {
+                        widget.callback = (value) => {
+                            node.properties[widget.name] = value;
+                            application.nodeManager.handlePropertyChanged(node, widget.name, value);
+                        };
+                    }
+                });
+            }
             if (node instanceof KnowledgeGraphNode) {
                 this.nodeManager.handleNodeAdded(node);
                 node.refreshControls();
@@ -290,6 +299,9 @@ class KnowledgeGraphNode extends LGraphNode {
     addPropertyWidget(key, value) {
         const widget = this.addWidget("text", key, value, (newValue) => {
             this.properties[key] = newValue;
+            if (this.onPropertyChanged) {
+                this.onPropertyChanged(key, newValue);
+            }
         });
         this.propertyWidgets.push(widget);
         return widget;
