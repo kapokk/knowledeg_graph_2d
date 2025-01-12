@@ -26,6 +26,24 @@ export default class NodeManager {
         const node = LiteGraph.createNode("knowledge/KnowledgeGraphNode", nodeData);
         node.title = nodeData.labels.join(', ');
         node.id = nodeData.id;
+
+        // 为每个属性控件添加变化监听
+        
+        node.widgets.forEach(widget => {
+            
+            widget.callback = (value) => {
+                if (widget.name == "Labels") { 
+                    node.labels = value.split(",").map(label => label.trim());
+                    this.handlePropertyChanged(node, widget.name, value);
+                }
+                else{
+                    node.properties[widget.name] = value;
+                    this.handlePropertyChanged(node, widget.name, value);
+                }
+            };
+            
+        });
+        
         
         // 计算不重叠的位置
         const padding = 50; // 节点之间的最小间距
@@ -118,6 +136,9 @@ export default class NodeManager {
             console.error('Node ID not found');
             return;
         }
+        if (property == "Labels") { 
+            
+        }
 
         const properties = { ...node.properties, [property]: value };
         this.apiClient.updateNode(node.id, properties)
@@ -141,7 +162,7 @@ export default class NodeManager {
 
         if (isConnected && type === LiteGraph.OUTPUT) {
             // 创建新连接
-            res_link = await this.apiClient.createRelationship(origin_id, target_id, link_type || 'CONNECTS_TO', {
+            const res_link = await this.apiClient.createRelationship(origin_id, target_id, link_type || 'CONNECTS_TO', {
                 origin_slot,
                 target_slot,
                 label: link_type || 'CONNECTS_TO'  // 添加标签
