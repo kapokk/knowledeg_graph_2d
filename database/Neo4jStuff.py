@@ -84,8 +84,8 @@ class Neo4jGraph:
             WHERE id(n) = $node_id
             SET n += $new_properties
             WITH n
-            CALL apoc.create.setLabels(n, $new_labels)
-            RETURN n
+            CALL apoc.create.setLabels(n, $new_labels) YIELD node
+            RETURN node
             """
             result = tx.run(query, node_id=node_id, new_properties=new_properties, new_labels=new_labels)
         elif new_labels is not None:
@@ -93,8 +93,8 @@ class Neo4jGraph:
             query = """
             MATCH (n)
             WHERE id(n) = $node_id
-            CALL apoc.create.setLabels(n, $new_labels)
-            RETURN n
+            CALL apoc.create.setLabels(n, $new_labels) YIELD node
+            RETURN node
             """
             result = tx.run(query, node_id=node_id, new_labels=new_labels)
         elif new_properties:
