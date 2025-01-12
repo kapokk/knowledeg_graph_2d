@@ -76,9 +76,9 @@ class Neo4jGraph:
             return result
 
     def _update_node_by_node_id(self, tx, node_id, new_properties, new_labels=None):
-        # Update both properties and labels if provided
-        if new_labels is not None:
-            # Remove all existing labels and set new ones
+        # Handle different update scenarios
+        if new_labels is not None and new_properties:
+            # Update both properties and labels
             query = """
             MATCH (n)
             WHERE id(n) = $node_id
@@ -88,8 +88,17 @@ class Neo4jGraph:
             RETURN n
             """
             result = tx.run(query, node_id=node_id, new_properties=new_properties, new_labels=new_labels)
-        else:
-            # Just update properties
+        elif new_labels is not None:
+            # Only update labels
+            query = """
+            MATCH (n)
+            WHERE id(n) = $node_id
+            CALL apoc.create.setLabels(n, $new_labels)
+            RETURN n
+            """
+            result = tx.run(query, node_id=node_id, new_labels=new_labels)
+        elif new_properties:
+            # Only update properties
             query = """
             MATCH (n)
             WHERE id(n) = $node_id
@@ -97,6 +106,15 @@ class Neo4jGraph:
             RETURN n
             """
             result = tx.run(query, node_id=node_id, new_properties=new_properties)
+        else:
+            # No updates to perform
+            query = """
+            MATCH (n)
+            WHERE id(n) = $node_id
+            RETURN n
+            """
+            result = tx.run(query, node_id=node_id)
+            
         return result.single()[0] if result.peek() else None
 
     def find_path(self, start_node_name, end_node_name):
