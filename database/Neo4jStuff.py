@@ -76,35 +76,14 @@ class Neo4jGraph:
             return result
 
     def _update_node_by_node_id(self, tx, node_id, new_properties):
-        if 'labels' in new_properties:
-            # Handle label updates separately
-            query = """
-            MATCH (n)
-            WHERE id(n) = $node_id
-            SET n:Node
-            REMOVE n:"""
-            # Remove all existing labels except Node
-            query += ":".join([label for label in new_properties['labels'] if label != 'Node'])
-            query += """
-            SET n:"""
-            # Add new labels
-            query += ":".join(new_properties['labels'])
-            query += """
-            SET n += $properties
-            RETURN n
-            """
-            # Remove labels from properties before setting
-            props = {k: v for k, v in new_properties.items() if k != 'labels'}
-            result = tx.run(query, node_id=node_id, properties=props)
-        else:
-            # Regular property update
-            query = """
-            MATCH (n)
-            WHERE id(n) = $node_id
-            SET n += $new_properties
-            RETURN n
-            """
-            result = tx.run(query, node_id=node_id, new_properties=new_properties)
+        # Regular property update
+        query = """
+        MATCH (n)
+        WHERE id(n) = $node_id
+        SET n += $new_properties
+        RETURN n
+        """
+        result = tx.run(query, node_id=node_id, new_properties=new_properties)
         return result.single()[0] if result.peek() else None
 
     def find_path(self, start_node_name, end_node_name):

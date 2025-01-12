@@ -133,16 +133,16 @@ class Node:
     def remove(self):
         GRAPH.remove_node_by_id(self.id)
 
-    def update(self, properties):
-        # Handle both properties and labels update
-        if 'labels' in properties:
-            self.labels = properties['labels']
-            # Remove labels key before updating other properties
-            update_props = {k: v for k, v in properties.items() if k != 'labels'}
-            GRAPH.update_node_by_node_id(self.id, update_props)
-            # Update labels separately
-            GRAPH.update_node_by_node_id(self.id, {'labels': self.labels})
-        else:
+    def update(self, properties, labels=None):
+        """更新节点属性和标签
+        Args:
+            properties (dict): 要更新的属性
+            labels (list, optional): 要更新的标签列表. 默认为 None 表示不更新标签
+        """
+        if labels is not None:
+            self.labels = labels
+            GRAPH.update_node_by_node_id(self.id, {'labels': labels})
+        if properties:
             GRAPH.update_node_by_node_id(self.id, properties)
         self.get()
 

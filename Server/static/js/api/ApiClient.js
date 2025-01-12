@@ -36,13 +36,16 @@ export default class ApiClient {
         throw new Error('Failed to create node');
     }
 
-    async updateNode(nodeId, properties, labels) {
+    async updateNode(nodeId, properties = {}, labels = []) {
         const response = await fetch(`${this.baseUrl}/nodes/${nodeId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ properties, labels })
+            body: JSON.stringify({ 
+                properties,
+                labels 
+            })
         });
         const result = await response.json();
         if (result.code === 200) {
