@@ -129,9 +129,18 @@ def handle_node(node_id):
             'data': node
         })
     elif request.method == 'PUT':
-        properties = request.json.get('properties', {})
+        data = request.json
+        properties = data.get('properties', {})
+        labels = data.get('labels', [])
         node = Node.from_id(node_id)
+        # Update properties first
         node.update(properties)
+        # Update labels if provided
+        if labels:
+            # This would require adding label update capability to Node class
+            node.labels = labels
+            # Need to persist label changes to database
+            node.update({'labels': labels})
         updated_node = node.to_dict()
         return jsonify({
             'code': 200,

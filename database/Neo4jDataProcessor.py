@@ -133,8 +133,17 @@ class Node:
     def remove(self):
         GRAPH.remove_node_by_id(self.id)
 
-    def update(self,properties):
-        GRAPH.update_node_by_node_id(self.id,properties)
+    def update(self, properties):
+        # Handle both properties and labels update
+        if 'labels' in properties:
+            self.labels = properties['labels']
+            # Remove labels key before updating other properties
+            update_props = {k: v for k, v in properties.items() if k != 'labels'}
+            GRAPH.update_node_by_node_id(self.id, update_props)
+            # Update labels separately
+            GRAPH.update_node_by_node_id(self.id, {'labels': self.labels})
+        else:
+            GRAPH.update_node_by_node_id(self.id, properties)
         self.get()
 
     def to(self,node):
