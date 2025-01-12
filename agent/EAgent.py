@@ -238,8 +238,11 @@ class EAgent:
                     s_result = chunk["output"]
                     yield s_result
                 elif ("actions" in chunk):
-                    add_response(chunk["actions"])
-                    yield chunk["actions"]
+                    content = chunk["messages"][0].content
+
+                    add_response(content)
+                    yield content
+                    pass
 
             # 最后一轮不评估
             if i == (iterations - 1):
@@ -258,8 +261,10 @@ class EAgent:
                     e_result = chunk["output"]
                     yield s_result
                 elif ("actions" in chunk):
-                    add_response(chunk["actions"])
-                    yield chunk["actions"]
+                    content = chunk["messages"][0].content
+
+                    add_response(content)
+                    yield content
 
 
             # 3. 记录当前迭代的目标和评估

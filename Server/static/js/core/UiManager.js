@@ -85,10 +85,16 @@ export class UiManager {
             }
 
             // 调用API提问
-            const response = await this.apiClient.askQuestion(nodeIds, question);
+            const response = this.apiClient.askQuestion(nodeIds, question,
+                (chunk) => { answerOutput.value = chunk },
+                (finalResult)=>{
+                    answerOutput.value = finalResult;
+                },
+                (error)=>{
+                    answerOutput.value = "api error";
+                });
 
-            // 显示结果
-            answerOutput.value = response.answer || "No answer available";
+            
         } catch (error) {
             console.error("Error asking question:", error);
             answerOutput.value = "Error: " + error.message;
