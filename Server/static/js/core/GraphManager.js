@@ -24,6 +24,7 @@ export default class GraphManager {
         this.graph.start();
         this.nodeManager.graph = this.graph
 
+        KnowledgeGraphNode.prototype.nodeManager = this.nodeManager
         LiteGraph.registerNodeType("knowledge/KnowledgeGraphNode", KnowledgeGraphNode);
 
         // 设置事件监听
@@ -35,6 +36,7 @@ export default class GraphManager {
         
         await this.loadGraphData();
         this.setupGraphEventHandlers();
+        
 
         
     }
@@ -44,17 +46,7 @@ export default class GraphManager {
 
         // 使用 LiteGraph 的事件系统
         this.graph.onNodeAdded = (node) => {
-            // 为每个属性控件添加变化监听
-            if (node instanceof KnowledgeGraphNode) {
-                node.widgets.forEach(widget => {
-                    if (widget.type === "text" && widget.name !== "Labels") {
-                        widget.callback = (value) => {
-                            node.properties[widget.name] = value;
-                            application.nodeManager.handlePropertyChanged(node, widget.name, value);
-                        };
-                    }
-                });
-            }
+            
             if (node instanceof KnowledgeGraphNode) {
                 this.nodeManager.handleNodeAdded(node);
                 node.refreshControls();
@@ -69,7 +61,16 @@ export default class GraphManager {
 
         // 自定义属性变化处理
         KnowledgeGraphNode.prototype.onPropertyChanged = function(property, value) {
-            application.nodeManager.handlePropertyChanged(this, property, value);
+            
+
+            if (property == "Labels") { 
+                this.labels = value.split(",").map(label => label.trim());
+                application.nodeManager.handlePropertyChanged(this, property, value);
+            }
+            else{
+                this.properties[property] = value;
+                application.nodeManager.handlePropertyChanged(this, property, value);
+            }
         };
 
         // 连接变化处理
@@ -145,6 +146,8 @@ export default class GraphManager {
             return options;
         
         };
+
+        
     }
 
     setupWebSocketListeners() {
@@ -242,7 +245,7 @@ export default class GraphManager {
 class KnowledgeGraphNode extends LGraphNode {
     constructor(node) {
         super();
-
+        this.id = node.id
         let labels = node.labels
         let properties = node.properties
         this.title = "Knowledge Graph Node";
@@ -291,6 +294,8 @@ class KnowledgeGraphNode extends LGraphNode {
                 this.properties[key] = value;
                 this.addPropertyWidget(key, value);
                 this.setSize([this.size[0], this.size[1] + 30]); // 调整节点大小
+                //手动触发属性更新
+                this.nodeManager.handlePropertyChanged(this, key, value);
             }
         });
     }
@@ -304,8 +309,13 @@ class KnowledgeGraphNode extends LGraphNode {
             }
         });
         this.propertyWidgets.push(widget);
+
+        
+        
+        
         return widget;
     }
+    
 
     // 节点执行逻辑
     onExecute() {

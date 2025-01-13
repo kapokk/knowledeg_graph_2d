@@ -71,6 +71,7 @@ class Neo4jGraph:
 
     # 更新节点并返回更新后的节点
     def update_node_by_node_id(self, node_id, new_properties, new_labels=None):
+        if("Node" not in new_labels): new_labels.append("Node") #must have this label for global index
         with self.begin_session() as session:
             result = session.write_transaction(self._update_node_by_node_id, node_id, new_properties, new_labels)
             return result

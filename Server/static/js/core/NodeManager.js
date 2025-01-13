@@ -27,27 +27,16 @@ export default class NodeManager {
         node.title = nodeData.labels.join(', ');
         node.id = nodeData.id;
 
-        // 为每个属性控件添加变化监听
-        
-        node.widgets.forEach(widget => {
-            
-            widget.callback = (value) => {
-                if (widget.name == "Labels") { 
-                    node.labels = value.split(",").map(label => label.trim());
-                    this.handlePropertyChanged(node, widget.name, value);
-                }
-                else{
-                    node.properties[widget.name] = value;
-                    this.handlePropertyChanged(node, widget.name, value);
-                }
-            };
-            
-        });
+        // // 为每个属性控件添加变化监听
+        // const typesDontHandleChange = ["button"]
+        // node.widgets.forEach(widget => {
+        //     this.registerWidgetChangeCallback(widget)
+        // });
         
         
         // 计算不重叠的位置
         const padding = 50; // 节点之间的最小间距
-        let pos = [Math.random() * 500, Math.random() * 500];
+        let pos = [Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientWidth, Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientHeight];
         let collision = true;
         let attempts = 0;
         
@@ -79,6 +68,28 @@ export default class NodeManager {
         
         node.pos = pos;
         return node;
+    }
+
+    registerWidgetChangeCallback(widget) {
+       // 为每个属性控件添加变化监听
+       const typesDontHandleChange = ["button"]
+       
+        if (typesDontHandleChange.includes(widget.type)) {
+            return;
+        }
+
+        widget.callback = (value) => {
+            if (widget.name == "Labels") { 
+                node.labels = value.split(",").map(label => label.trim());
+                this.handlePropertyChanged(node, widget.name, value);
+            }
+            else{
+                node.properties[widget.name] = value;
+                this.handlePropertyChanged(node, widget.name, value);
+            }
+        
+           
+       };
     }
 
     handleNodeCreated(nodeData) {

@@ -141,9 +141,9 @@ class Node:
         """
         if labels is not None:
             self.labels = labels
-            GRAPH.update_node_by_node_id(self.id, {'labels': labels})
-        if properties:
-            GRAPH.update_node_by_node_id(self.id, properties)
+
+        GRAPH.update_node_by_node_id(self.id, properties,labels)
+
         self.get()
 
     def to(self,node):
