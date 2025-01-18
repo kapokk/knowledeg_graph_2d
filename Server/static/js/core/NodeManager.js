@@ -27,24 +27,34 @@ export default class NodeManager {
         node.title = nodeData.labels.join(', ');
         node.id = nodeData.id;
 
-        // // 为每个属性控件添加变化监听
-        // const typesDontHandleChange = ["button"]
-        // node.widgets.forEach(widget => {
-        //     this.registerWidgetChangeCallback(widget)
-        // });
-        
-        
-        // 计算不重叠的位置
+        // 计算节点复杂度（输入输出数量）
+        const inputCount = node.inputs?.length || 0;
+        const outputCount = node.outputs?.length || 0;
+        const complexity = inputCount + outputCount;
+
+        // 获取画布尺寸
+        const canvas = this.graph.list_of_graphcanvas[0].canvas;
+        const centerX = canvas.clientWidth / 2;
+        const centerY = canvas.clientHeight / 2;
+
+        // 根据复杂度计算初始位置
+        const maxRadius = Math.min(canvas.clientWidth, canvas.clientHeight) * 0.4;
+        const radius = maxRadius * (1 - Math.min(1, complexity / 10)); // 复杂度越高越靠近中心
+        const angle = Math.random() * Math.PI * 2;
+
+        let pos = [
+            centerX + radius * Math.cos(angle),
+            centerY + radius * Math.sin(angle)
+        ];
+
+        // 检查碰撞并调整位置
         const padding = 50; // 节点之间的最小间距
-        let pos = [Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientWidth, Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientHeight];
         let collision = true;
         let attempts = 0;
         
-        // 最多尝试100次找到不重叠的位置
         while (collision && attempts < 100) {
             collision = false;
             
-            // 检查与所有现有节点的碰撞
             for (const existingNode of this.nodeMap.values()) {
                 const dx = Math.abs(pos[0] - existingNode.pos[0]);
                 const dy = Math.abs(pos[1] - existingNode.pos[1]);
@@ -54,11 +64,19 @@ export default class NodeManager {
                 );
                 
                 if (dx < minDistance && dy < minDistance) {
-                    // 发生碰撞，生成新位置
+                    // 发生碰撞，沿半径向外移动
+                    const currentRadius = Math.sqrt(
+                        Math.pow(pos[0] - centerX, 2) + 
+                        Math.pow(pos[1] - centerY, 2)
+                    );
+                    const newRadius = currentRadius + minDistance;
+                    const newAngle = Math.atan2(pos[1] - centerY, pos[0] - centerX);
+                    
                     pos = [
-                        Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientWidth,
-                        Math.random() * this.graph.list_of_graphcanvas[0].canvas.clientHeight
+                        centerX + newRadius * Math.cos(newAngle),
+                        centerY + newRadius * Math.sin(newAngle)
                     ];
+                    
                     collision = true;
                     attempts++;
                     break;
