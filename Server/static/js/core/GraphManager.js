@@ -239,6 +239,29 @@ export default class GraphManager {
             this.canvas.canvas.height = window.innerHeight;
         }
     }
+
+    async freezeGraph() {
+        try {
+            await this.apiClient.freezeGraph();
+            console.log("Graph frozen successfully");
+        } catch (error) {
+            console.error("Failed to freeze graph:", error);
+            alert("Failed to freeze graph. Please try again.");
+        }
+    }
+
+    async resetGraph() {
+        try {
+            await this.apiClient.resetGraph();
+            console.log("Graph reset successfully");
+            
+            // 重新加载图形数据
+            await this.loadGraphData();
+        } catch (error) {
+            console.error("Failed to reset graph:", error);
+            alert("Failed to reset graph. Please try again.");
+        }
+    }
 }
 
 

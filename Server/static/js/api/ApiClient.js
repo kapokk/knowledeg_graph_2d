@@ -90,6 +90,28 @@ export default class ApiClient {
         }
         throw new Error('Failed to delete relationship');
     }
+
+    async freezeGraph() {
+        const response = await fetch(`${this.baseUrl}/freeze`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            return result;
+        }
+        throw new Error('Failed to freeze graph');
+    }
+
+    async resetGraph() {
+        const response = await fetch(`${this.baseUrl}/reset`, {
+            method: 'POST'
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            return result;
+        }
+        throw new Error('Failed to reset graph');
+    }
     
     askQuestion(nodeIds, question, onData, onComplete, onError) {
         const controller = new AbortController();

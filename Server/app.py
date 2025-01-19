@@ -9,6 +9,7 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(project_root)
 
 from flask import Flask, request, jsonify, render_template, Response
+import json
 from flask_cors import CORS
 from flask_socketio import SocketIO, emit
 from database.Neo4jDataProcessor import Node, Link
@@ -234,6 +235,66 @@ def handle_relationship(relationship_id):
             'code': 204,
             'data': deleted_relationship
         })
+
+# 全局变量存储冻结状态
+FROZEN_STATE = None
+
+@app.route('/api/freeze', methods=['POST'])
+def handle_freeze():
+    try:
+        # 获取所有节点和关系
+        nodes = [node.to_dict() for node in Node.get_all_nodes()]
+        relationships = [link.to_dict() for link in Link.get_all_relationships()]
+        
+        # 保存冻结状态
+        global FROZEN_STATE
+        FROZEN_STATE = {
+            'nodes': nodes,
+            'relationships': relationships
+        }
+        
+        return jsonify({
+            'code': 200,
+            'message': 'Graph frozen successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': str(e)
+        }), 500
+
+@app.route('/api/reset', methods=['POST'])
+def handle_reset():
+    try:
+        global FROZEN_STATE
+        if not FROZEN_STATE:
+            return jsonify({
+                'code': 400,
+                'message': 'No frozen state available'
+            }), 400
+        
+        # 删除现有所有节点和关系
+        for node in Node.get_all_nodes():
+            node.remove()
+        
+        # 恢复冻结的节点
+        for node_data in FROZEN_STATE['nodes']:
+            Node.from_node(node_data['labels'], node_data['properties'])
+        
+        # 恢复冻结的关系
+        for rel_data in FROZEN_STATE['relationships']:
+            start_node = Node.from_id(rel_data['start_node']['id'])
+            start_node.connect(rel_data['end_node']['id'], rel_data['type'], rel_data['properties'])
+        
+        return jsonify({
+            'code': 200,
+            'message': 'Graph reset successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'code': 500,
+            'message': str(e)
+        }), 500
 
 if __name__ == '__main__':
     socketio.run(app, debug=True,allow_unsafe_werkzeug=True)
