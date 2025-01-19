@@ -236,26 +236,61 @@ def handle_relationship(relationship_id):
             'data': deleted_relationship
         })
 
-# 全局变量存储冻结状态
-FROZEN_STATE = None
+# 后台任务管理器
+class BackgroundTaskManager:
+    def __init__(self):
+        self.frozen_state = None
+        self.task_lock = threading.Lock()
+        
+    def freeze_graph(self):
+        with self.task_lock:
+            # 获取所有节点和关系
+            nodes = [node.to_dict() for node in Node.get_all_nodes()]
+            relationships = [link.to_dict() for link in Link.get_all_relationships()]
+            
+            # 保存冻结状态
+            self.frozen_state = {
+                'nodes': nodes,
+                'relationships': relationships
+            }
+            
+    def reset_graph(self):
+        with self.task_lock:
+            if not self.frozen_state:
+                raise ValueError("No frozen state available")
+            
+            # 删除现有所有节点和关系
+            for node in Node.get_all_nodes():
+                node.remove()
+            
+            # 恢复冻结的节点
+            for node_data in self.frozen_state['nodes']:
+                Node.from_node(node_data['labels'], node_data['properties'])
+            
+            # 恢复冻结的关系
+            for rel_data in self.frozen_state['relationships']:
+                start_node = Node.from_id(rel_data['start_node']['id'])
+                start_node.connect(rel_data['end_node']['id'], rel_data['type'], rel_data['properties'])
+
+# 初始化后台任务管理器
+task_manager = BackgroundTaskManager()
 
 @app.route('/api/freeze', methods=['POST'])
 def handle_freeze():
     try:
-        # 获取所有节点和关系
-        nodes = [node.to_dict() for node in Node.get_all_nodes()]
-        relationships = [link.to_dict() for link in Link.get_all_relationships()]
+        # 在后台线程中执行冻结操作
+        def freeze_task():
+            try:
+                task_manager.freeze_graph()
+                socketio.emit('graph_frozen', {'status': 'success'})
+            except Exception as e:
+                socketio.emit('graph_frozen', {'status': 'error', 'message': str(e)})
         
-        # 保存冻结状态
-        global FROZEN_STATE
-        FROZEN_STATE = {
-            'nodes': nodes,
-            'relationships': relationships
-        }
+        threading.Thread(target=freeze_task).start()
         
         return jsonify({
             'code': 200,
-            'message': 'Graph frozen successfully'
+            'message': 'Freeze operation started'
         })
     except Exception as e:
         return jsonify({
@@ -266,29 +301,19 @@ def handle_freeze():
 @app.route('/api/reset', methods=['POST'])
 def handle_reset():
     try:
-        global FROZEN_STATE
-        if not FROZEN_STATE:
-            return jsonify({
-                'code': 400,
-                'message': 'No frozen state available'
-            }), 400
+        # 在后台线程中执行重置操作
+        def reset_task():
+            try:
+                task_manager.reset_graph()
+                socketio.emit('graph_reset', {'status': 'success'})
+            except Exception as e:
+                socketio.emit('graph_reset', {'status': 'error', 'message': str(e)})
         
-        # 删除现有所有节点和关系
-        for node in Node.get_all_nodes():
-            node.remove()
-        
-        # 恢复冻结的节点
-        for node_data in FROZEN_STATE['nodes']:
-            Node.from_node(node_data['labels'], node_data['properties'])
-        
-        # 恢复冻结的关系
-        for rel_data in FROZEN_STATE['relationships']:
-            start_node = Node.from_id(rel_data['start_node']['id'])
-            start_node.connect(rel_data['end_node']['id'], rel_data['type'], rel_data['properties'])
+        threading.Thread(target=reset_task).start()
         
         return jsonify({
             'code': 200,
-            'message': 'Graph reset successfully'
+            'message': 'Reset operation started'
         })
     except Exception as e:
         return jsonify({

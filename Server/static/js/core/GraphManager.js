@@ -130,13 +130,22 @@ export default class GraphManager {
             this.apiClient = this.graphManager.apiClient;
         };
 
-        KnowledgeGraphNode.prototype.getMenuOptions = (canvas) => {
-            // 添加右键菜单选项
-        
-            const options = [];
-
+        this.canvas.onShowNodeMenu = (node, options, event) => {
+            // 如果没有选中节点，显示空白处菜单
+            if (!node) {
+                options.push({
+                    content: "Freeze Graph",
+                    callback: () => this.freezeGraph()
+                });
+                
+                options.push({
+                    content: "Reset Graph",
+                    callback: () => this.resetGraph()
+                });
+            }
+            
             // 添加Ask选项（仅在选中节点时显示）
-            if (canvas.selected_nodes && Object.entries(canvas.selected_nodes).length > 0) {
+            if (this.canvas.selected_nodes && Object.entries(this.canvas.selected_nodes).length > 0) {
                 options.push({
                     content: "Ask",
                     callback: () => this.uiManager.showAskPanel()
@@ -144,7 +153,6 @@ export default class GraphManager {
             }
 
             return options;
-        
         };
 
         
@@ -243,23 +251,45 @@ export default class GraphManager {
     async freezeGraph() {
         try {
             await this.apiClient.freezeGraph();
-            console.log("Graph frozen successfully");
+            console.log("Freeze operation started");
+            
+            // 监听冻结完成事件
+            this.wsClient.on('graph_frozen', (data) => {
+                if (data.status === 'success') {
+                    console.log("Graph frozen successfully");
+                    alert("Graph frozen successfully");
+                } else {
+                    console.error("Failed to freeze graph:", data.message);
+                    alert(`Failed to freeze graph: ${data.message}`);
+                }
+            });
         } catch (error) {
-            console.error("Failed to freeze graph:", error);
-            alert("Failed to freeze graph. Please try again.");
+            console.error("Failed to start freeze operation:", error);
+            alert("Failed to start freeze operation. Please try again.");
         }
     }
 
     async resetGraph() {
         try {
             await this.apiClient.resetGraph();
-            console.log("Graph reset successfully");
+            console.log("Reset operation started");
             
-            // 重新加载图形数据
-            await this.loadGraphData();
+            // 监听重置完成事件
+            this.wsClient.on('graph_reset', (data) => {
+                if (data.status === 'success') {
+                    console.log("Graph reset successfully");
+                    // 重新加载图形数据
+                    this.loadGraphData().then(() => {
+                        alert("Graph reset successfully");
+                    });
+                } else {
+                    console.error("Failed to reset graph:", data.message);
+                    alert(`Failed to reset graph: ${data.message}`);
+                }
+            });
         } catch (error) {
-            console.error("Failed to reset graph:", error);
-            alert("Failed to reset graph. Please try again.");
+            console.error("Failed to start reset operation:", error);
+            alert("Failed to start reset operation. Please try again.");
         }
     }
 }
