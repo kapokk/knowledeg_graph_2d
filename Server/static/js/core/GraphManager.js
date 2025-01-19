@@ -130,22 +130,13 @@ export default class GraphManager {
             this.apiClient = this.graphManager.apiClient;
         };
 
-        this.canvas.onShowNodeMenu = (node, options, event) => {
-            // 如果没有选中节点，显示空白处菜单
-            if (!node) {
-                options.push({
-                    content: "Freeze Graph",
-                    callback: () => this.freezeGraph()
-                });
-                
-                options.push({
-                    content: "Reset Graph",
-                    callback: () => this.resetGraph()
-                });
-            }
-            
+        KnowledgeGraphNode.prototype.getMenuOptions = (canvas) => {
+            // 添加右键菜单选项
+        
+            const options = [];
+
             // 添加Ask选项（仅在选中节点时显示）
-            if (this.canvas.selected_nodes && Object.entries(this.canvas.selected_nodes).length > 0) {
+            if (canvas.selected_nodes && Object.entries(canvas.selected_nodes).length > 0) {
                 options.push({
                     content: "Ask",
                     callback: () => this.uiManager.showAskPanel()
@@ -153,6 +144,35 @@ export default class GraphManager {
             }
 
             return options;
+        
+        };
+
+        
+    
+
+        this.canvas.getExtraMenuOptions = (canvas, options) => {
+            // 如果没有选中节点，显示空白处菜单
+                const extra = []
+                extra.push({
+                    content: "Freeze Graph",
+                    callback: () => this.freezeGraph()
+                });
+                
+                extra.push({
+                    content: "Reset Graph",
+                    callback: () => this.resetGraph()
+                });
+            
+            
+            // 添加Ask选项（仅在选中节点时显示）
+            if (this.canvas.selected_nodes && Object.entries(this.canvas.selected_nodes).length > 0) {
+                extra.push({
+                    content: "Ask",
+                    callback: () => this.uiManager.showAskPanel()
+                });
+            }
+
+            return extra;
         };
 
         
