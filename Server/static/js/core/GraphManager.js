@@ -270,46 +270,35 @@ export default class GraphManager {
 
     async freezeGraph() {
         try {
-            await this.apiClient.freezeGraph();
-            console.log("Freeze operation started");
-            
-            // 监听冻结完成事件
-            this.wsClient.on('graph_frozen', (data) => {
-                if (data.status === 'success') {
-                    console.log("Graph frozen successfully");
-                    alert("Graph frozen successfully");
-                } else {
-                    console.error("Failed to freeze graph:", data.message);
-                    alert(`Failed to freeze graph: ${data.message}`);
-                }
-            });
+            const result = await this.apiClient.freezeGraph();
+            if (result.code === 200) {
+                console.log("Graph frozen successfully");
+                alert("Graph frozen successfully");
+            } else {
+                console.error("Failed to freeze graph:", result.message);
+                alert(`Failed to freeze graph: ${result.message}`);
+            }
         } catch (error) {
-            console.error("Failed to start freeze operation:", error);
-            alert("Failed to start freeze operation. Please try again.");
+            console.error("Failed to freeze graph:", error);
+            alert("Failed to freeze graph. Please try again.");
         }
     }
 
     async resetGraph() {
         try {
-            await this.apiClient.resetGraph();
-            console.log("Reset operation started");
-            
-            // 监听重置完成事件
-            this.wsClient.on('graph_reset', (data) => {
-                if (data.status === 'success') {
-                    console.log("Graph reset successfully");
-                    // 重新加载图形数据
-                    this.loadGraphData().then(() => {
-                        alert("Graph reset successfully");
-                    });
-                } else {
-                    console.error("Failed to reset graph:", data.message);
-                    alert(`Failed to reset graph: ${data.message}`);
-                }
-            });
+            const result = await this.apiClient.resetGraph();
+            if (result.code === 200) {
+                console.log("Graph reset successfully");
+                // 重新加载图形数据
+                await this.loadGraphData();
+                alert("Graph reset successfully");
+            } else {
+                console.error("Failed to reset graph:", result.message);
+                alert(`Failed to reset graph: ${result.message}`);
+            }
         } catch (error) {
-            console.error("Failed to start reset operation:", error);
-            alert("Failed to start reset operation. Please try again.");
+            console.error("Failed to reset graph:", error);
+            alert("Failed to reset graph. Please try again.");
         }
     }
 }

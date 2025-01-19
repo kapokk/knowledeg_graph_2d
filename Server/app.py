@@ -278,19 +278,10 @@ task_manager = BackgroundTaskManager()
 @app.route('/api/freeze', methods=['POST'])
 def handle_freeze():
     try:
-        # 在后台线程中执行冻结操作
-        def freeze_task():
-            try:
-                task_manager.freeze_graph()
-                socketio.emit('graph_frozen', {'status': 'success'})
-            except Exception as e:
-                socketio.emit('graph_frozen', {'status': 'error', 'message': str(e)})
-        
-        threading.Thread(target=freeze_task).start()
-        
+        task_manager.freeze_graph()
         return jsonify({
             'code': 200,
-            'message': 'Freeze operation started'
+            'message': 'Graph frozen successfully'
         })
     except Exception as e:
         return jsonify({
@@ -301,19 +292,10 @@ def handle_freeze():
 @app.route('/api/reset', methods=['POST'])
 def handle_reset():
     try:
-        # 在后台线程中执行重置操作
-        def reset_task():
-            try:
-                task_manager.reset_graph()
-                socketio.emit('graph_reset', {'status': 'success'})
-            except Exception as e:
-                socketio.emit('graph_reset', {'status': 'error', 'message': str(e)})
-        
-        threading.Thread(target=reset_task).start()
-        
+        task_manager.reset_graph()
         return jsonify({
             'code': 200,
-            'message': 'Reset operation started'
+            'message': 'Graph reset successfully'
         })
     except Exception as e:
         return jsonify({
