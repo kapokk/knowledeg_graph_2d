@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+import traceback
 
 from agent.EAgent import EAgent
 
@@ -298,6 +299,7 @@ def handle_reset():
             'message': 'Graph reset successfully'
         })
     except Exception as e:
+        traceback.print_exc()
         return jsonify({
             'code': 500,
             'message': str(e)
