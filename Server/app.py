@@ -264,14 +264,22 @@ class BackgroundTaskManager:
             for node in Node.get_all_nodes():
                 node.remove()
             
-            # 恢复冻结的节点
-            for node_data in self.frozen_state['nodes']:
-                Node.from_node(node_data['labels'], node_data['properties'])
+            # 创建节点ID映射表
+            node_id_map = {}
             
-            # 恢复冻结的关系
+            # 恢复冻结的节点并记录新ID
+            for node_data in self.frozen_state['nodes']:
+                new_node = Node.from_node(node_data['labels'], node_data['properties'])
+                node_id_map[node_data['id']] = new_node.id
+            
+            # 恢复冻结的关系，使用新的节点ID
             for rel_data in self.frozen_state['relationships']:
-                start_node = Node.from_id(rel_data['start_node']['id'])
-                start_node.connect(rel_data['end_node']['id'], rel_data['type'], rel_data['properties'])
+                start_id = node_id_map.get(rel_data['start_node']['id'])
+                end_id = node_id_map.get(rel_data['end_node']['id'])
+                
+                if start_id and end_id:
+                    start_node = Node.from_id(start_id)
+                    start_node.connect(end_id, rel_data['type'], rel_data['properties'])
 
 # 初始化后台任务管理器
 task_manager = BackgroundTaskManager()
