@@ -277,7 +277,7 @@ class BackgroundTaskManager:
                 start_id = node_id_map.get(rel_data['start_node']['id'])
                 end_id = node_id_map.get(rel_data['end_node']['id'])
                 
-                if start_id and end_id:
+                if start_id>-1 and end_id>-1:
                     start_node = Node.from_id(start_id)
                     start_node.connect(end_id, rel_data['type'], rel_data['properties'])
 

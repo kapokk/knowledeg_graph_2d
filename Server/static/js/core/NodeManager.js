@@ -5,6 +5,7 @@ export default class NodeManager {
         this.graph = graph;
         this.nodeMap = new Map();
         this.app = app;
+        this.listen_change = true;
     }
 
     async loadInitialData() {
@@ -111,119 +112,132 @@ export default class NodeManager {
     }
 
     handleNodeCreated(nodeData) {
-        const lgNode = this.createKnowledgeGraphNode(nodeData);
-        this.nodeMap.set(nodeData.id, lgNode);
-        if (this.graph) {
-            this.graph.add(lgNode);
+        if (this.listen_change) {
+            const lgNode = this.createKnowledgeGraphNode(nodeData);
+            this.nodeMap.set(nodeData.id, lgNode);
+            if (this.graph) {
+                this.graph.add(lgNode);
+            }
         }
     }
 
     handleNodeUpdated(nodeData) {
-        const lgNode = this.nodeMap.get(nodeData.id);
-        if (lgNode) {
-            lgNode.properties = nodeData.properties;
-            lgNode.title = nodeData.labels.join(', ');
-            lgNode.setDirtyCanvas(true, true);
+        if (this.listen_change) {
+            const lgNode = this.nodeMap.get(nodeData.id);
+            if (lgNode) {
+                lgNode.properties = nodeData.properties;
+                lgNode.title = nodeData.labels.join(', ');
+                lgNode.setDirtyCanvas(true, true);
+            }
         }
     }
 
     handleNodeDeleted(nodeData) {
-        const lgNode = this.nodeMap.get(nodeData.id);
-        if (lgNode && this.graph) {
-            this.graph.remove(lgNode);
-            this.nodeMap.delete(nodeData.id);
+        if (this.listen_change) {
+            const lgNode = this.nodeMap.get(nodeData.id);
+            if (lgNode && this.graph) {
+                this.graph.remove(lgNode);
+                this.nodeMap.delete(nodeData.id);
+            }
         }
     }
 
     handleNodeAdded(node) {
-        console.log("node added")
-        this.apiClient.createNode(node.labels, node.properties)
-            .then(createdNode => {
-                node.id = createdNode.id;
-                node.properties = createdNode.properties;
-                node.labels = createdNode.labels;
-                node.title = createdNode.labels.join(', ');
-                this.nodeMap.set(createdNode.id, node);
-                node.refreshControls()
-            })
-            .catch(error => {
-                console.error('Failed to create node:', error);
-                alert('Failed to create node. Please try again.');
-            });
+        if (this.listen_change) {
+            console.log("node added")
+            this.apiClient.createNode(node.labels, node.properties)
+                .then(createdNode => {
+                    node.id = createdNode.id;
+                    node.properties = createdNode.properties;
+                    node.labels = createdNode.labels;
+                    node.title = createdNode.labels.join(', ');
+                    this.nodeMap.set(createdNode.id, node);
+                    node.refreshControls()
+                })
+                .catch(error => {
+                    console.error('Failed to create node:', error);
+                    alert('Failed to create node. Please try again.');
+                });
+        }
     }
 
     handleNodeRemoved(node) {
-        const nodeId = node.id
-        if (nodeId) {
-            this.apiClient.deleteNode(nodeId)
-                .catch(console.error);
+        if (this.listen_change) {
+            const nodeId = node.id
+            if (nodeId) {
+                this.apiClient.deleteNode(nodeId)
+                    .catch(console.error);
+            }
         }
     }
 
     handlePropertyChanged(node, property, value) {
-        if (!node.id) {
-            console.error('Node ID not found');
-            return;
-        }
+        if (this.listen_change) {
+            if (!node.id) {
+                console.error('Node ID not found');
+                return;
+            }
 
-        if (property === "Labels") {
-            // Handle label update
-            const labels = value.split(",").map(label => label.trim());
-            this.apiClient.updateNode(node.id, {}, labels)
-                .then(updatedNode => {
-                    node.labels = labels;
-                    node.title = labels.join(', ');
-                    node.refreshControls();
-                })
-                .catch(error => {
-                    console.error('Failed to update labels:', error);
-                    node.refreshControls();
-                });
-        } else {
-            // Handle property update
-            const properties = { ...node.properties, [property]: value };
-            this.apiClient.updateNode(node.id, properties)
-                .then(updatedNode => {
-                    node.properties = updatedNode.properties;
-                    node.refreshControls();
-                })
-                .catch(error => {
-                    console.error('Failed to update node:', error);
-                    node.properties[property] = node.properties[property]; // Revert change
-                    node.refreshControls();
-                });
+            if (property === "Labels") {
+                // Handle label update
+                const labels = value.split(",").map(label => label.trim());
+                this.apiClient.updateNode(node.id, {}, labels)
+                    .then(updatedNode => {
+                        node.labels = labels;
+                        node.title = labels.join(', ');
+                        node.refreshControls();
+                    })
+                    .catch(error => {
+                        console.error('Failed to update labels:', error);
+                        node.refreshControls();
+                    });
+            } else {
+                // Handle property update
+                const properties = { ...node.properties, [property]: value };
+                this.apiClient.updateNode(node.id, properties)
+                    .then(updatedNode => {
+                        node.properties = updatedNode.properties;
+                        node.refreshControls();
+                    })
+                    .catch(error => {
+                        console.error('Failed to update node:', error);
+                        node.properties[property] = node.properties[property]; // Revert change
+                        node.refreshControls();
+                    });
+            }
         }
     }
 
     async handleConnectionsChange(node, type, slot, isConnected, link_info, input_info) {
-        const { origin_id, origin_slot, target_id, target_slot, type: link_type } = link_info;
+        if (this.listen_change) {
+            const { origin_id, origin_slot, target_id, target_slot, type: link_type } = link_info;
         
-        if (!origin_id || !target_id) {
-            return;
-        }
+            
 
-        if (isConnected && type === LiteGraph.OUTPUT) {
-            // 创建新连接
-            const res_link = await this.apiClient.createRelationship(origin_id, target_id, link_type || 'CONNECTS_TO', {
-                origin_slot,
-                target_slot,
-                label: link_type || 'CONNECTS_TO'  // 添加标签
-            })
-                .then(relationship => {
-                    // 将关系ID存储在link_info中
-                    link_info.id = relationship.id;
-                    return link_info
+            if (isConnected && type === LiteGraph.OUTPUT) {
+                // 创建新连接
+                const res_link = await this.apiClient.createRelationship(origin_id, target_id, link_type || 'CONNECTS_TO', {
+                    origin_slot,
+                    target_slot,
+                    label: link_type || 'CONNECTS_TO'  // 添加标签
                 })
-                .catch(console.error);
-            return res_link
-        } else if (!isConnected && type === LiteGraph.OUTPUT) {
-            // 删除连接
-            if (link_info.id) {
-                this.apiClient.deleteRelationship(link_info.id)
+                    .then(relationship => {
+                        // 将关系ID存储在link_info中
+                        link_info.id = relationship.id;
+                        return link_info
+                    })
                     .catch(console.error);
-            } else {
-                console.warn('No relationship ID found for connection removal');
+                return res_link
+            } else if (!isConnected && type === LiteGraph.OUTPUT) {
+                // 删除连接
+                if (link_info.id) {
+                    this.apiClient.deleteRelationship(link_info.id)
+                        .catch(console.error);
+                } else {
+                    console.warn('No relationship ID found for connection removal');
+                }
             }
         }
+        return link_info
     }
 }

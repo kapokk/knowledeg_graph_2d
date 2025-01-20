@@ -82,7 +82,7 @@ export default class GraphManager {
                     const startNode = node;
                     const endNode = application.nodeManager.nodeMap.get(link_info.target_id)
                     if (endNode instanceof KnowledgeGraphNode) {
-                        res_link = await application.nodeManager.handleConnectionsChange(
+                        let res_link = await application.nodeManager.handleConnectionsChange(
                             startNode,
                             type,
                             slot,
@@ -196,6 +196,7 @@ export default class GraphManager {
 
     async loadGraphData() {
         // 加载节点数据
+        this.nodeManager.listen_change = false
         await this.nodeManager.loadInitialData();
         
         // 加载关系数据并创建连接
@@ -233,6 +234,7 @@ export default class GraphManager {
                 endNode.setDirtyCanvas(true, true);
             }
         }
+        this.nodeManager.listen_change = true
     }
 
     setupEventListeners() {
@@ -286,16 +288,20 @@ export default class GraphManager {
 
     async resetGraph() {
         try {
+            this.graph.clear()
             const result = await this.apiClient.resetGraph();
-            if (result.code === 200) {
-                console.log("Graph reset successfully");
-                // 重新加载图形数据
-                await this.loadGraphData();
-                alert("Graph reset successfully");
-            } else {
-                console.error("Failed to reset graph:", result.message);
-                alert(`Failed to reset graph: ${result.message}`);
-            }
+            setTimeout(async () => { 
+                if (result.code === 200) {
+                    console.log("Graph reset successfully");
+                    // 重新加载图形数据
+                    await this.loadGraphData();
+                    console.log("Graph reset successfully");
+                } else {
+                    console.error("Failed to reset graph:", result.message);
+                    alert(`Failed to reset graph: ${result.message}`);
+                }
+            },1000)
+           
         } catch (error) {
             console.error("Failed to reset graph:", error);
             alert("Failed to reset graph. Please try again.");
