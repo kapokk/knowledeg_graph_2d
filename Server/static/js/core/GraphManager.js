@@ -181,11 +181,11 @@ export default class GraphManager {
         };
 
         
-        LiteGraph.LLink.prototype.onPropertyChange = function(property, value) {
-            if (this.id && application.nodeManager.listen_change) {
+        LiteGraph.LLink.prototype.onPropertyChanged = function(link,property, value) {
+            if (link.id>=0 && application.nodeManager.listen_change) {
                 // Update relationship properties via API
                 const properties = { [property]: value };
-                application.apiClient.updateRelationship(this.id, properties)
+                application.apiClient.updateRelationship(link.id, properties)
                     .then(updatedRel => {
                         console.log('Relationship updated:', updatedRel);
                     })

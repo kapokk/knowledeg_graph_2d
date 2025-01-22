@@ -41,7 +41,7 @@ class Link:
 
     def get(self):
         n = GRAPH.get_relationship_by_id(self.id)
-        if (n==None):
+        if (n==[]):
             raise ValueError(f"Relationship ID:{self.id} not exist")
         self.type = n["type"]
         self.properties = n["properties"]
