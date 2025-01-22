@@ -2422,6 +2422,8 @@
         console.log("link removed");
     }
 
+
+
     LiteGraph.LLink = LLink;
 
     // *************************************************************
@@ -12749,7 +12751,23 @@ LGraphNode.prototype.executeAction = function(action)
 					return;
 				node.graph.remove(node);
 				panel.close();
-			}).classList.add("delete");
+            }).classList.add("delete");
+            
+            panel.addButton("Add Property", () => {
+                const key = prompt("Enter property key:");
+                if (key) {
+                    const value = prompt("Enter property value:");
+                    // this.properties[key] = value;
+                    // this.addPropertyWidget(key, value);
+                    // this.setSize([this.size[0], this.size[1] + 30]); // 调整节点大小
+                    // //手动触发属性更新
+                    // this.nodeManager.handlePropertyChanged(this, key, value);
+                    if (node.onPropertyChanged) {
+                        node.onPropertyChanged(key, value);
+                    }
+                    inner_refresh()
+                }
+            }).classList.add("delete");
 		}
 
 		panel.inner_showCodePad = function( propname )
@@ -12824,9 +12842,8 @@ LGraphNode.prototype.executeAction = function(action)
             panel.classList.add("settings");
 
         function updatePanelContent() {
-            panel.content.innerHTML = "";
-            panel.addHTML("<span class='link_id'>Link ID: " + link.id + "</span><span class='separator'></span>");
-            panel.addHTML("<h3>Properties</h3>");
+            
+            //mix label and property bug
             var setPropertyFunc = function (propertyName, propertyValue) {
                 switch (propertyName) {
                     case "Weight":
@@ -12836,15 +12853,24 @@ LGraphNode.prototype.executeAction = function(action)
                         link.label = propertyValue;
                         break;
                     default:
-                        link.setProperty(propertyName, propertyValue);
+                        link[propertyName] = propertyValue;
                         break;
+                }
+                if (link.__proto__.onPropertyChanged) { 
+                    link.__proto__.onPropertyChanged(link,propertyName,propertyValue)
                 }
                 currentObj.graph.afterChange();
                 currentObj.dirty_canvas = true;
             };
+            panel.content.innerHTML = "";
+            panel.addHTML("<span class='link_id'>Link ID: " + link.id + "</span><span class='separator'></span>");
+            panel.addHTML("<h3>Label</h3>");
+            panel.addWidget("string", "_label", link._label || "", {}, setPropertyFunc);
+            panel.addHTML("<h3>Properties</h3>");
+            
             
             const filter_name = ['id', 'type', 'origin_id', 'origin_slot', 'target_id', 'target_slot', '_data', '_pos', '_label_color', '_label_bgcolor', 'data']
-            for (let [k, v] of Object.entries(link)) { 
+            for (let [k, v] of Object.entries(link.properties)) { 
                 if (filter_name.includes(k)) continue;
                 panel.addWidget("string", k, v || "", {}, setPropertyFunc);
             }
@@ -12855,6 +12881,22 @@ LGraphNode.prototype.executeAction = function(action)
                 if (!link.block_delete) {
                     currentObj.graph.removeLink(link.id);
                     panel.close();
+                }
+            }).classList.add("delete");
+
+            panel.addButton("Add Property", () => {
+                const key = prompt("Enter property key:");
+                if (key) {
+                    const value = prompt("Enter property value:");
+                    // this.properties[key] = value;
+                    // this.addPropertyWidget(key, value);
+                    // this.setSize([this.size[0], this.size[1] + 30]); // 调整节点大小
+                    // //手动触发属性更新
+                    // this.nodeManager.handlePropertyChanged(this, key, value);
+                    if (link.onPropertyChanged) {
+                        link.onPropertyChanged(link,key, value);
+                    }
+                    updatePanelContent()
                 }
             }).classList.add("delete");
         }
