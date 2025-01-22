@@ -14,6 +14,9 @@ export default class GraphManager {
 
     async initialize() {
         
+
+
+
         // Initialize graph and canvas
         this.graph = new LGraph();
 
@@ -98,6 +101,8 @@ export default class GraphManager {
                             input_info
                         );
                         link_info.id = res_link.id
+                        startNode.addOutput("","")
+                        endNode.addInput("","")
                     }
                 }
                 // 处理连接删除
@@ -175,6 +180,10 @@ export default class GraphManager {
             return extra;
         };
 
+        
+        LiteGraph.LLink.prototype.onPropertyChange = (property, value) => { 
+            
+        }
         
     }
 
