@@ -91,6 +91,21 @@ export default class ApiClient {
         throw new Error('Failed to delete relationship');
     }
 
+    async updateRelationship(relationshipId, properties) {
+        const response = await fetch(`${this.baseUrl}/relationships/${relationshipId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ properties })
+        });
+        const result = await response.json();
+        if (result.code === 200) {
+            return result.data;
+        }
+        throw new Error('Failed to update relationship');
+    }
+
     async freezeGraph() {
         const response = await fetch(`${this.baseUrl}/freeze`, {
             method: 'POST'
