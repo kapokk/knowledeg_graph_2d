@@ -2422,6 +2422,8 @@
         console.log("link removed");
     }
 
+
+
     LiteGraph.LLink = LLink;
 
     // *************************************************************
@@ -12824,9 +12826,7 @@ LGraphNode.prototype.executeAction = function(action)
             panel.classList.add("settings");
 
         function updatePanelContent() {
-            panel.content.innerHTML = "";
-            panel.addHTML("<span class='link_id'>Link ID: " + link.id + "</span><span class='separator'></span>");
-            panel.addHTML("<h3>Properties</h3>");
+            //mix label and property bug
             var setPropertyFunc = function (propertyName, propertyValue) {
                 switch (propertyName) {
                     case "Weight":
@@ -12836,15 +12836,24 @@ LGraphNode.prototype.executeAction = function(action)
                         link.label = propertyValue;
                         break;
                     default:
-                        link.setProperty(propertyName, propertyValue);
+                        link[propertyName] = propertyValue;
                         break;
+                }
+                if (link.__proto__.onPropertyChanged) { 
+                    link.__proto__.onPropertyChanged(link,propertyName,propertyValue)
                 }
                 currentObj.graph.afterChange();
                 currentObj.dirty_canvas = true;
             };
+            panel.content.innerHTML = "";
+            panel.addHTML("<span class='link_id'>Link ID: " + link.id + "</span><span class='separator'></span>");
+            panel.addHTML("<h3>Label</h3>");
+            panel.addWidget("string", "_label", link._label || "", {}, setPropertyFunc);
+            panel.addHTML("<h3>Properties</h3>");
+            
             
             const filter_name = ['id', 'type', 'origin_id', 'origin_slot', 'target_id', 'target_slot', '_data', '_pos', '_label_color', '_label_bgcolor', 'data']
-            for (let [k, v] of Object.entries(link)) { 
+            for (let [k, v] of Object.entries(link.properties)) { 
                 if (filter_name.includes(k)) continue;
                 panel.addWidget("string", k, v || "", {}, setPropertyFunc);
             }

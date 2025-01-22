@@ -184,8 +184,13 @@ export default class GraphManager {
         LiteGraph.LLink.prototype.onPropertyChanged = function(link,property, value) {
             if (link.id>=0 && application.nodeManager.listen_change) {
                 // Update relationship properties via API
-                const properties = { [property]: value };
-                const type = link.type; // Get current type
+                let type = undefined;
+                let properties = undefined;
+                if (property == "_label") {
+                    type = value
+                } else {
+                    properties = { [property]: value };
+                }
                 application.apiClient.updateRelationship(link.id, properties, type)
                     .then(updatedRel => {
                         console.log('Relationship updated:', updatedRel);
@@ -236,12 +241,7 @@ export default class GraphManager {
                     link._label = rel.type;
                     link._label_color = "#666";
                     link._label_bgcolor = "#eee";
-                }
-                // 添加连接标签
-                if (rel.type) {
-                    link._label = rel.type;
-                    link._label_color = "#666";
-                    link._label_bgcolor = "#eee";
+                    link.properties = rel.properties
                 }
                 startNode.addOutput("", "");
                         

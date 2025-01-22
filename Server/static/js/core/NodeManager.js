@@ -173,7 +173,7 @@ export default class NodeManager {
 
     handlePropertyChanged(node, property, value) {
         if (this.listen_change) {
-            if (!node.id) {
+            if (node.id<0) {
                 console.error('Node ID not found');
                 return;
             }
