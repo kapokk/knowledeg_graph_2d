@@ -220,9 +220,11 @@ def handle_relationship(relationship_id):
             'data': relationship
         })
     elif request.method == 'PUT':
-        properties = request.json.get('properties', {})
+        data = request.json
+        properties = data.get('properties', {})
+        new_type = data.get('type')
         relationship = Link.from_id(relationship_id)
-        relationship.update(properties)
+        relationship.update(properties, new_type)
         updated_relationship = relationship.to_dict()
         return jsonify({
             'code': 200,

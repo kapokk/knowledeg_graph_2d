@@ -51,8 +51,8 @@ class Link:
     def remove(self):
         GRAPH.remove_relationship_by_id(self.id)
 
-    def update(self, new_properties):
-        GRAPH.update_relationship_by_rel_id(self.id,  new_properties)
+    def update(self, new_properties, new_type=None):
+        GRAPH.update_relationship_by_rel_id(self.id, new_properties, new_type)
 
     def to_dict(self):
         """序列化关系对象为字典"""

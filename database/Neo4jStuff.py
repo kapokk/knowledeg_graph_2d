@@ -182,19 +182,32 @@ class Neo4jGraph:
    
 
     # 更新关系并返回更新后的关系
-    def update_relationship_by_rel_id(self, rel_id, new_properties):
+    def update_relationship_by_rel_id(self, rel_id, new_properties, new_type=None):
         with self.begin_session() as session:
-            result = session.write_transaction(self._update_relationship_by_rel_id, rel_id, new_properties)
+            result = session.write_transaction(self._update_relationship_by_rel_id, rel_id, new_properties, new_type)
             return result
 
-    def _update_relationship_by_rel_id(self, tx, rel_id, new_properties):
-        query = """
-        MATCH ()-[r]->()
-        WHERE id(r) = $rel_id
-        SET r += $new_properties
-        RETURN r
-        """
-        result = tx.run(query, rel_id=rel_id, new_properties=new_properties)
+    def _update_relationship_by_rel_id(self, tx, rel_id, new_properties, new_type=None):
+        if new_type:
+            # Update both type and properties
+            query = """
+            MATCH ()-[r]->()
+            WHERE id(r) = $rel_id
+            SET r += $new_properties
+            WITH r
+            CALL apoc.refactor.setType(r, $new_type) YIELD input, output
+            RETURN output
+            """
+            result = tx.run(query, rel_id=rel_id, new_properties=new_properties, new_type=new_type)
+        else:
+            # Only update properties
+            query = """
+            MATCH ()-[r]->()
+            WHERE id(r) = $rel_id
+            SET r += $new_properties
+            RETURN r
+            """
+            result = tx.run(query, rel_id=rel_id, new_properties=new_properties)
         return result.single()[0] if result.peek() else None
 
     def get_all_nodes(self):

@@ -185,7 +185,8 @@ export default class GraphManager {
             if (link.id>=0 && application.nodeManager.listen_change) {
                 // Update relationship properties via API
                 const properties = { [property]: value };
-                application.apiClient.updateRelationship(link.id, properties)
+                const type = link.type; // Get current type
+                application.apiClient.updateRelationship(link.id, properties, type)
                     .then(updatedRel => {
                         console.log('Relationship updated:', updatedRel);
                     })

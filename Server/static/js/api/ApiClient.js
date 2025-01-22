@@ -91,13 +91,13 @@ export default class ApiClient {
         throw new Error('Failed to delete relationship');
     }
 
-    async updateRelationship(relationshipId, properties) {
+    async updateRelationship(relationshipId, properties, type) {
         const response = await fetch(`${this.baseUrl}/relationships/${relationshipId}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ properties })
+            body: JSON.stringify({ properties, type })
         });
         const result = await response.json();
         if (result.code === 200) {
